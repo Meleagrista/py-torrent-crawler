@@ -10,6 +10,7 @@ python = "^3.12"
 bs4 = "^0.0.2"
 requests = "^2.32.3"
 cloudscraper = "^1.2.71"
+pydantic = "^2.11.1"
 
 
 [build-system]
