@@ -1,10 +1,10 @@
 from typing import Tuple
-
 from bs4 import BeautifulSoup
-from pydantic import BaseModel
+from pydantic import Field
 from enum import Enum
 
 from constants import TORRENT_BASE_URL, NUMBER_OF_LINKS
+from schemas.page_schema import Page
 from schemas.torrent_schema import Torrent
 from utils.requests import RobustFetcher
 
@@ -49,22 +49,21 @@ class Genre(str, Enum):
     WESTERN = "Western"
 
 
-class Movie(BaseModel):
-    title: str
-    genres: Tuple[Genre, ...]
-    summary: str
-    poster: str
-    rating: float
-    torrents: Tuple[Torrent, ...]
-    metadata: dict = {}
+class Movie(Page):
+    title: str = Field(..., description="The title of the movie.")
+    genres: Tuple['Genre', ...] = Field(..., description="A tuple of genres associated with the movie.")
+    summary: str = Field(..., description="A brief summary of the movie plot.")
+    poster: str = Field(..., description="The URL or path to the movie poster image.")
+    rating: float = Field(..., ge=0.0, le=100.0, description="The rating of the movie.")
+    torrents: Tuple['Torrent', ...] = Field(..., description="A tuple of torrents available for the movie.")
 
     def __eq__(self, other):
         if not isinstance(other, Movie):
             return False
-        return self.title == other.title  # Compare only by title
+        return self.title == other.title
 
     def __hash__(self):
-        return hash(self.title)  # Hash using only title
+        return hash(self.title)
 
     @classmethod
     def from_url(cls, url: str) -> 'Movie':
@@ -74,35 +73,26 @@ class Movie(BaseModel):
 
         soup = BeautifulSoup(response, 'html.parser')
 
-        # Extract title
         title_element = soup.select_one(".torrent-detail-info h3 a")
         title = title_element.text.strip() if title_element else None
         if not title:
             raise ValueError("No title found for URL.")
 
-        # Extract genres
         genres = tuple(Genre(g.text.strip()) for g in soup.select(".torrent-category span") if g.text.strip())
-
-        # Extract summary
         summary_element = soup.select_one(".torrent-detail-info p")
         summary = summary_element.text.strip() if summary_element else "No summary available."
 
-        # Extract rating
         rating_element = soup.select_one(".rating .red")
         rating = (
             float(rating_element["style"].split(":")[1].strip("%;")) / 100
             if rating_element else 0.0
         )
 
-        # Extract poster image
         image_element = soup.select_one(".torrent-image img")
         image_url = f"https:{image_element['src']}" if image_element else None
 
-        # Extract torrent links along with their seeders
         torrents = []
         torrent_data = []
-
-        # Extract each row in the table that contains torrent info
         for row in soup.select('tbody tr'):
             link = row.select_one('td.coll-1 a[href^="/torrent/"]')
             if not link:
@@ -113,7 +103,6 @@ class Movie(BaseModel):
             seeders = int(seeder_count.text.strip()) if seeder_count else 0
             torrent_data.append((torrent_link, seeders))
 
-        # Sort the list of torrents by the number of seeders in descending order
         sorted_torrents = sorted(torrent_data, key=lambda x: x[1], reverse=True)
         sorted_torrent_links = [torrent[0] for torrent in sorted_torrents]
 
@@ -124,15 +113,15 @@ class Movie(BaseModel):
             if len(torrents) >= NUMBER_OF_LINKS:
                 break
 
-        # Create and return Movie object
         movie = Movie(
+            url=url,
+            metadata={'torrent_links': sorted_torrent_links},
             title=title,
             genres=genres,
             summary=summary,
             rating=rating,
             poster=image_url,
             torrents=torrents,
-            metadata={'url': url, 'torrent_urls': sorted_torrent_links}
         )
 
         return movie

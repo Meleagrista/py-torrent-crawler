@@ -1,67 +1,18 @@
 import logging
 import re
-from datetime import datetime
 
+from datetime import datetime
+from typing import List
 from bs4 import BeautifulSoup
-from dateutil.relativedelta import relativedelta
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator, Field
 
 from constants import LANGUAGES
 from schemas.date_schema import Date
+from schemas.page_schema import Page
 from schemas.size_schema import Size
 from utils.requests import RobustFetcher
 
 logger = logging.getLogger(__name__)
-
-
-def extract_date(text: str) -> datetime:
-    time_pattern = re.compile(r'(\d+)\s*(year|month|week|day|hour|minute)s?\s*ago', re.IGNORECASE)
-    match = time_pattern.search(text)
-
-    if match:
-        # Extract the value and unit
-        value = int(match.group(1))
-        unit = match.group(2).lower()
-
-        # Calculate the timedelta
-        now = datetime.now()
-
-        if unit == 'year':
-            return now - relativedelta(years=value)
-        elif unit == 'month':
-            return now - relativedelta(months=value)
-        elif unit == 'week':
-            return now - relativedelta(weeks=value)
-        elif unit == 'day':
-            return now - relativedelta(days=value)
-        elif unit == 'hour':
-            return now - relativedelta(hours=value)
-        elif unit == 'minute':
-            return now - relativedelta(minutes=value)
-
-    # Fallback if no match is found (return the current time if unable to parse)
-    return datetime.now()
-
-
-def extract_size(size_text: str) -> float:
-    # Strip any whitespace
-    size_text = size_text.strip().lower()
-
-    # Check if the size is in GB, MB, or KB
-    if 'gb' in size_text:
-        # Extract the number and convert to float
-        size = float(size_text.replace('gb', '').strip())
-    elif 'mb' in size_text:
-        # Convert MB to GB (1 MB = 1/1024 GB)
-        size = float(size_text.replace('mb', '').strip()) / 1024
-    elif 'kb' in size_text:
-        # Convert KB to GB (1 KB = 1/1024/1024 GB)
-        size = float(size_text.replace('kb', '').strip()) / (1024 * 1024)
-    else:
-        # Default to GB if unit is not recognized
-        size = float(size_text)
-
-    return size
 
 
 def get_li_span_text(soup, label: str) -> str | None:
@@ -72,9 +23,9 @@ def get_li_span_text(soup, label: str) -> str | None:
 
 
 class Comment(BaseModel):
-    user: str
-    message: str
-    date: Date
+    user: str = Field(..., description="The username of the person who posted the comment.")
+    message: str = Field(..., description="The content of the comment.")
+    date: Date = Field(..., description="The date and time when the comment was posted.")
 
     @classmethod
     def from_html(cls, html: str | BeautifulSoup) -> list['Comment']:
@@ -88,35 +39,31 @@ class Comment(BaseModel):
         comment_details = comments_section.find_all('div', class_='comment-detail')
 
         for detail in comment_details:
-            # Extract user name
             user_name = detail.find('a', class_='user').text.strip()
-
-            # Extract message
             message = detail.find('p').text.strip()
-
-            # Extract date
             date_text = detail.find('span', {'class': 'flaticon-time'}).find_next('span').text.strip()
             date = Date.from_string(date_text)
-
-            # Create the Comment object
             comment = Comment(user=user_name, message=message, date=date)
             comments.append(comment)
 
         return comments
 
 
-class Torrent(BaseModel):
-    category: str
-    subcategory: str
-    language: str
-    date: Date
-    size: Size
-    tags: list[str] = []
-    comments: list[Comment] = []
-    uploader: str
-    downloads: int
-    seeders: int
-    metadata: dict = {}
+class Torrent(Page):
+    category: str = Field(..., description="The category of the torrent.")
+    language: str = Field(..., description="The language of the torrent content.")
+    date: datetime = Field(..., description="The date when the torrent was uploaded")
+    size: Size = Field(..., description="The size of the torrent files")
+    comments: List[Comment] = Field(default_factory=list, description="A list of comments for the torrent")
+    seeders: int = Field(..., description="The number of seeders for this torrent")
+    magnet_link: str = Field(..., description="The magnet link for the torrent")
+
+    @field_validator('magnet_link', mode='after')
+    def validate_magnet_link(self, v):
+        magnet_regex = r'^magnet:\?xt=urn:btih:[a-fA-F0-9]{40,64}.*'
+        if not re.match(magnet_regex, v):
+            raise ValueError(f"Invalid magnet link: {v}")
+        return v
 
     @classmethod
     def from_url(cls, url: str) -> 'Torrent':
@@ -126,6 +73,7 @@ class Torrent(BaseModel):
 
         soup = BeautifulSoup(response, 'html.parser')
 
+        # Extract language, category, subcategory, etc.
         language = get_li_span_text(soup, 'Language')
         if language not in LANGUAGES:
             logger.warning(f"Language '{language}' not supported.")
@@ -149,17 +97,17 @@ class Torrent(BaseModel):
         downloads = int(downloads_text.replace(',', '')) if downloads_text else 0
         seeders_text = get_li_span_text(soup, 'Seeders')
         seeders = int(seeders_text.replace(',', '')) if seeders_text else 0
+        magnet_link_tag = soup.find('a', string="Magnet Download")
+        magnet_link = magnet_link_tag['href'] if magnet_link_tag else None
 
         return Torrent(
+            url=url,
+            metadata={'downloads': downloads, 'uploader': uploader, 'tags': tags, 'type': subcategory},
             category=category,
-            subcategory=subcategory,
             language=language,
             date=date,
             size=size,
-            tags=tags,
             comments=comments,
-            uploader=uploader,
-            downloads=downloads,
             seeders=seeders,
-            metadata={'url': url}
+            magnet_link=magnet_link,
         )
