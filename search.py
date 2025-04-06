@@ -1,22 +1,20 @@
-import requests
-import urllib.parse
 import logging
-from bs4 import BeautifulSoup
+import urllib.parse
+
 from typing import Set
+from bs4 import BeautifulSoup
 
 from enums.movies.genres import Genre
 from schemas.movie_schema import Movie
+from utils.requests import RobustFetcher
 
 logger = logging.getLogger(__name__)
 
-
 class MovieSearch:
-
     BASE_URL = "https://1337x.to"
 
     def __init__(self):
         self._search_url = self.BASE_URL + "/sort-category-search/{query}/Movies/seeders/desc/1/"
-        self.session = requests.Session()
 
     def search(self, query: str) -> Set['Movie']:
         """
@@ -38,14 +36,11 @@ class MovieSearch:
         formatted_query = urllib.parse.quote_plus(query)
         search_url = self._search_url.format(query=formatted_query)
 
-        try:
-            response = self.session.get(search_url, timeout=10)
-            response.raise_for_status()
-        except requests.RequestException as e:
-            logger.error(f"Error fetching search results: {e}")
+        response = RobustFetcher.fetch_url(search_url)
+        if not response:
             return set()
 
-        soup = BeautifulSoup(response.text, 'html.parser')
+        soup = BeautifulSoup(response, 'html.parser')
         if "Bad search request" in soup.text or "Bad Category" in soup.text:
             logger.error("Invalid search or no results found.")
             return set()
@@ -59,20 +54,19 @@ class MovieSearch:
         # Fetch movie links from each torrent page
         movie_links = set()
         for url in torrent_links:
-            try:
-                response = self.session.get(url, timeout=10)
-                response.raise_for_status()
-                soup = BeautifulSoup(response.text, 'html.parser')
+            response = RobustFetcher.fetch_url(url)
+            if not response:
+                continue
+            soup = BeautifulSoup(response, 'html.parser')
 
-                movie_link = soup.select_one('a[href^="/movie/"]')
-                if movie_link:
-                    movie_links.add(self.BASE_URL + movie_link["href"])
-            except requests.RequestException as e:
-                logger.error(f"Error fetching torrent page: {url} - {e}")
+            movie_link = soup.select_one('a[href^="/movie/"]')
+            if movie_link:
+                movie_links.add(self.BASE_URL + movie_link["href"])
 
         return movie_links
 
-    def _get_movie_objects(self, urls: Set[str]) -> Set['Movie']:
+    @staticmethod
+    def _get_movie_objects(urls: Set[str]) -> Set['Movie']:
         """
         Extracts movie details from given URLs.
 
@@ -82,14 +76,11 @@ class MovieSearch:
         movies = set()
 
         for url in urls:
-            try:
-                response = self.session.get(url, timeout=10)
-                response.raise_for_status()
-            except requests.RequestException as e:
-                logger.error(f"Error fetching movie page: {url} - {e}")
+            response = RobustFetcher.fetch_url(url)
+            if not response:
                 continue
 
-            soup = BeautifulSoup(response.text, 'html.parser')
+            soup = BeautifulSoup(response, 'html.parser')
 
             # Extract title
             title_element = soup.select_one(".torrent-detail-info h3 a")
