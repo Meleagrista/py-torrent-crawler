@@ -1,20 +1,36 @@
 import logging
+import time
 import urllib.parse
 
 from typing import Set
 from bs4 import BeautifulSoup
 
-from enums.movies.genres import Genre
+from constants import TORRENT_BASE_URL
 from schemas.movie_schema import Movie
 from utils.requests import RobustFetcher
 
 logger = logging.getLogger(__name__)
+logging.basicConfig(
+    level=logging.INFO,
+    format="[%(levelname)s] %(message)s"
+)
+
 
 class MovieSearch:
-    BASE_URL = "https://1337x.to"
+    ERROR_INDICATORS = [
+        "bad search request",
+        "bad category",
+        "access denied",
+        "error 403",
+        "you don't have permission",
+        "page not found",
+        "not available",
+        "invalid request",
+        "no results found"
+    ]
 
     def __init__(self):
-        self._search_url = self.BASE_URL + "/sort-category-search/{query}/Movies/seeders/desc/1/"
+        self._search_url = TORRENT_BASE_URL + "/sort-category-search/{query}/Movies/seeders/desc/1/"
 
     def search(self, query: str) -> Set['Movie']:
         """
@@ -24,7 +40,16 @@ class MovieSearch:
         :return: A set of Movie objects.
         """
         urls = self._get_movie_links(query)
-        return self._get_movie_objects(urls)
+        movies = set()
+
+        for url in urls:
+            try:
+                movie = Movie.from_url(url)
+                movies.add(movie)
+            except Exception as e:
+                logger.error(f"Error fetching movie from URL {url}: {e}")
+                continue
+        return movies
 
     def _get_movie_links(self, query: str) -> Set[str]:
         """
@@ -40,82 +65,48 @@ class MovieSearch:
         if not response:
             return set()
 
-        soup = BeautifulSoup(response, 'html.parser')
-        if "Bad search request" in soup.text or "Bad Category" in soup.text:
-            logger.error("Invalid search or no results found.")
+        if any(err in response for err in self.ERROR_INDICATORS) or len(response) < 100:
+            logger.error("Search failed or returned an invalid page.")
             return set()
+
+        soup = BeautifulSoup(response, 'html.parser')
 
         # Extract links to torrents
         torrent_links = {
-            self.BASE_URL + link["href"]
+            TORRENT_BASE_URL + link["href"]
             for link in soup.select('a[href^="/torrent/"]')
         }
 
         # Fetch movie links from each torrent page
         movie_links = set()
-        for url in torrent_links:
+
+        # Use copy to safely modify the set during iteration
+        while torrent_links:
+            url = torrent_links.pop()
+            start_time = time.perf_counter()
             response = RobustFetcher.fetch_url(url)
+
             if not response:
                 continue
-            soup = BeautifulSoup(response, 'html.parser')
 
+            soup = BeautifulSoup(response, 'html.parser')
             movie_link = soup.select_one('a[href^="/movie/"]')
+            logger.debug(f"Fetched {url} in {(time.perf_counter() - start_time):.2f} seconds")
+
             if movie_link:
-                movie_links.add(self.BASE_URL + movie_link["href"])
+                movie_url = TORRENT_BASE_URL + movie_link["href"]
+                movie_response = RobustFetcher.fetch_url(movie_url)
+
+                if not movie_response:
+                    continue
+
+                movie_soup = BeautifulSoup(movie_response, 'html.parser')
+                movie_torrent_links = {
+                    TORRENT_BASE_URL + link["href"]
+                    for link in movie_soup.select('a[href^="/torrent/"]')
+                }
+
+                movie_links.add(movie_url)
+                torrent_links -= movie_torrent_links
 
         return movie_links
-
-    @staticmethod
-    def _get_movie_objects(urls: Set[str]) -> Set['Movie']:
-        """
-        Extracts movie details from given URLs.
-
-        :param urls: Set of movie page URLs.
-        :return: Set of Movie objects.
-        """
-        movies = set()
-
-        for url in urls:
-            response = RobustFetcher.fetch_url(url)
-            if not response:
-                continue
-
-            soup = BeautifulSoup(response, 'html.parser')
-
-            # Extract title
-            title_element = soup.select_one(".torrent-detail-info h3 a")
-            title = title_element.text.strip() if title_element else None
-            if not title:
-                logger.warning(f"No title found for URL: {url}")
-                continue
-
-            # Extract genres
-            genres = tuple(Genre(g.text.strip()) for g in soup.select(".torrent-category span") if g.text.strip())
-
-            # Extract summary
-            summary_element = soup.select_one(".torrent-detail-info p")
-            summary = summary_element.text.strip() if summary_element else "No summary available."
-
-            # Extract rating
-            rating_element = soup.select_one(".rating .red")
-            rating = (
-                float(rating_element["style"].split(":")[1].strip("%;")) / 100
-                if rating_element else 0.0
-            )
-
-            # Extract image
-            image_element = soup.select_one(".torrent-image img")
-            image_url = f"https:{image_element['src']}" if image_element else ""
-
-            # Create Movie object
-            movie = Movie(
-                title=title,
-                genres=genres,
-                summary=summary,
-                rating=rating,
-                poster=image_url,
-                torrents=tuple()
-            )
-            movies.add(movie)
-
-        return movies

@@ -11,7 +11,7 @@ from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.CRITICAL + 1)
+logger.setLevel(logging.ERROR)
 logger.propagate = False
 
 
@@ -21,6 +21,7 @@ class RobustFetcher:
 
     # Set up Selenium options
     options = Options()
+    options.page_load_strategy = 'eager'
     options.add_argument("--headless")
     options.add_argument("--disable-gpu")
     options.add_argument("--window-size=1920,1080")
@@ -29,6 +30,7 @@ class RobustFetcher:
     # Initialize Selenium driver
     service = Service(ChromeDriverManager().install())
     driver = webdriver.Chrome(service=service, options=options)
+    driver.implicitly_wait(2)
 
     @classmethod
     def fetch_url(cls, url):
@@ -38,7 +40,7 @@ class RobustFetcher:
             response.raise_for_status()
             logger.debug("Fetched successfully with requests.")
             return str(response.text)
-        except (SSLError, RequestException) as e:
+        except Exception as e:
             logger.warning(f"Requests failed for {url}: {e}. Falling back to Selenium.")
             try:
                 cls.driver.get(url)
