@@ -35,21 +35,27 @@ def main():
 
         display(movies)
 
-        # Ask the user to select a movie
-        try:
-            selection = int(input("\nSelect a movie by number to download (or type 0 to cancel): "))
-            if selection == 0:
-                print("Cancelled movie download.")
-                continue
-            if 1 <= selection <= len(movies):
-                selected_movie = movies[selection - 1]
-                download(selected_movie)
-            else:
-                print("Invalid selection. Please choose a valid number.")
-        except ValueError:
-            print("Invalid input. Please enter a valid number.")
+        selected_movie = None
 
-        print()
+        # Ask the user to select a movie
+        while not selected_movie:
+            try:
+                selection = int(input("\nSelect a movie by number to download (or type 0 to cancel): "))
+                if selection == 0:
+                    print("Cancelled movie download.")
+                    exit()
+                if 1 <= selection <= len(movies):
+                    selected_movie = movies[selection - 1]
+                else:
+                    print("Invalid selection. Please choose a valid number.")
+            except Exception as e:
+                print(f"Error: {e}. Please enter a valid number.")
+
+        try:
+            download(selected_movie)
+        except Exception as e:
+            print(f"Error downloading the movie: {e}")
+            exit()
 
 
 if __name__ == "__main__":

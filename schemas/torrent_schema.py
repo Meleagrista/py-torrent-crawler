@@ -1,8 +1,9 @@
 import logging
 import re
 
-from datetime import datetime
 from typing import List
+from urllib.parse import urlparse
+
 from bs4 import BeautifulSoup
 from pydantic import BaseModel, field_validator, Field
 
@@ -52,17 +53,32 @@ class Comment(BaseModel):
 class Torrent(Page):
     category: str = Field(..., description="The category of the torrent.")
     language: str = Field(..., description="The language of the torrent content.")
-    date: datetime = Field(..., description="The date when the torrent was uploaded")
+    date: Date = Field(..., description="The date when the torrent was uploaded")
     size: Size = Field(..., description="The size of the torrent files")
     comments: List[Comment] = Field(default_factory=list, description="A list of comments for the torrent")
     seeders: int = Field(..., description="The number of seeders for this torrent")
     magnet_link: str = Field(..., description="The magnet link for the torrent")
+    torrent_links: List[str] = Field(default_factory=list, description="List of torrent file links")
 
+    @classmethod
     @field_validator('magnet_link', mode='after')
-    def validate_magnet_link(self, v):
+    def validate_magnet_link(cls, v):
         magnet_regex = r'^magnet:\?xt=urn:btih:[a-fA-F0-9]{40,64}.*'
         if not re.match(magnet_regex, v):
             raise ValueError(f"Invalid magnet link: {v}")
+        return v
+
+    @classmethod
+    @field_validator('torrent_links', mode='after')
+    def validate_torrent_links(cls, v):
+        if not v:
+            raise ValueError("No .torrent links provided.")
+        for link in v:
+            parsed = urlparse(link)
+            if parsed.scheme not in ('http', 'https'):
+                raise ValueError(f"Invalid torrent link (bad scheme): {link}")
+            if not parsed.path.endswith('.torrent') and 'torrent' not in parsed.path:
+                raise ValueError(f"Invalid torrent link format: {link}")
         return v
 
     @classmethod
@@ -97,8 +113,18 @@ class Torrent(Page):
         downloads = int(downloads_text.replace(',', '')) if downloads_text else 0
         seeders_text = get_li_span_text(soup, 'Seeders')
         seeders = int(seeders_text.replace(',', '')) if seeders_text else 0
-        magnet_link_tag = soup.find('a', string="Magnet Download")
+        magnet_link_tag = next((a for a in soup.find_all('a', href=True) if 'Magnet Download' in a.get_text(strip=True)), None)
         magnet_link = magnet_link_tag['href'] if magnet_link_tag else None
+        dropdown = soup.find('ul', class_='dropdown-menu')
+        torrent_links = []
+        if dropdown:
+            for a_tag in dropdown.find_all('a', href=True):
+                href = a_tag['href']
+                if href.endswith('.torrent') or 'torrent.php?' in href or 'btcache.me' in href:
+                    torrent_links.append(href)
+
+        if not magnet_link or not torrent_links:
+            raise ValueError("No magnet link or torrent file links found.")
 
         return Torrent(
             url=url,
@@ -110,4 +136,5 @@ class Torrent(Page):
             comments=comments,
             seeders=seeders,
             magnet_link=magnet_link,
+            torrent_links=torrent_links
         )
