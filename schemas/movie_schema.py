@@ -1,4 +1,4 @@
-from typing import Tuple
+from typing import Tuple, List
 from bs4 import BeautifulSoup
 from pydantic import Field
 from enum import Enum
@@ -6,7 +6,7 @@ from enum import Enum
 from constants import TORRENT_BASE_URL, NUMBER_OF_LINKS
 from schemas.page_schema import Page
 from schemas.torrent_schema import Torrent
-from utils.requests import RobustFetcher
+from utils.requests import fecther
 
 
 class Genre(str, Enum):
@@ -55,7 +55,7 @@ class Movie(Page):
     summary: str = Field(..., description="A brief summary of the movie plot.")
     poster: str = Field(..., description="The URL or path to the movie poster image.")
     rating: float = Field(..., ge=0.0, le=100.0, description="The rating of the movie.")
-    torrents: Tuple['Torrent', ...] = Field(..., description="A tuple of torrents available for the movie.")
+    torrents: List['Torrent'] = Field(..., description="A tuple of torrents available for the movie.")
 
     def __eq__(self, other):
         if not isinstance(other, Movie):
@@ -67,7 +67,7 @@ class Movie(Page):
 
     @classmethod
     def from_url(cls, url: str) -> 'Movie':
-        response = RobustFetcher.fetch_url(url)
+        response = fecther.fetch_url(url)
         if not response:
             raise ValueError("Failed to fetch the URL.")
 

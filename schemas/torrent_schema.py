@@ -11,7 +11,7 @@ from constants import LANGUAGES
 from schemas.date_schema import Date
 from schemas.page_schema import Page
 from schemas.size_schema import Size
-from utils.requests import RobustFetcher
+from utils.requests import fecther
 
 logger = logging.getLogger(__name__)
 
@@ -83,7 +83,7 @@ class Torrent(Page):
 
     @classmethod
     def from_url(cls, url: str) -> 'Torrent':
-        response = RobustFetcher.fetch_url(url)
+        response = fecther.fetch_url(url)
         if not response:
             raise ValueError("Failed to fetch the URL.")
 

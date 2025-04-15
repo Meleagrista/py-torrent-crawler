@@ -1,4 +1,6 @@
 import logging
+import os
+
 import requests
 import urllib3
 
@@ -15,36 +17,43 @@ logger.propagate = False
 
 
 class RobustFetcher:
-    # Pre-initialize session
-    session = requests.Session()
 
-    # Set up Selenium options
-    options = Options()
-    options.page_load_strategy = 'eager'
-    options.add_argument("--headless")
-    options.add_argument("--disable-gpu")
-    options.add_argument("--window-size=1920,1080")
-    options.add_argument("--no-sandbox")
+    def __init__(self):
+        self.session = requests.Session()
 
-    # Initialize Selenium driver
-    service = Service(ChromeDriverManager().install())
-    driver = webdriver.Chrome(service=service, options=options)
-    driver.implicitly_wait(2)
+        # Read from env or use fallback path
+        chrome_binary = os.environ.get("CHROME_BINARY", "/usr/bin/chromium-browser")
 
-    @classmethod
-    def fetch_url(cls, url):
+        options = Options()
+        options.binary_location = chrome_binary
+        options.page_load_strategy = 'eager'
+        options.add_argument("--headless=new")
+        options.add_argument("--disable-gpu")
+        options.add_argument("--window-size=1920,1080")
+        options.add_argument("--no-sandbox")
+        options.add_argument("--disable-dev-shm-usage")
+        options.add_argument("--remote-debugging-port=9222")  # This is the critical one
+
+        # Setup ChromeDriver
+        service = Service(ChromeDriverManager(driver_version="135.0.7049.84").install())
+        self.driver = webdriver.Chrome(service=service, options=options)
+        self.driver.implicitly_wait(2)
+
+    def fetch_url(self, url):
         logger.debug(f"Fetching URL: {url}")
         try:
-            response = cls.session.get(url, timeout=10)
+            response = self.session.get(url, timeout=10)
             response.raise_for_status()
             logger.debug("Fetched successfully with requests.")
             return str(response.text)
         except Exception as e:
             logger.warning(f"Requests failed for {url}: {e}. Falling back to Selenium.")
             try:
-                cls.driver.get(url)
+                self.driver.get(url)
                 logger.debug("Fetched successfully with Selenium.")
-                return str(cls.driver.page_source)
+                return str(self.driver.page_source)
             except Exception as se:
                 logger.error(f"Selenium also failed for {url}: {se}")
                 return None
+
+fecther = RobustFetcher()

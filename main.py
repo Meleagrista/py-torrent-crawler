@@ -17,7 +17,7 @@ def display(movies: list[Movie]):
 
 
 def download(movie: Movie):
-    torrent_file = TorrentDownloader(movie.torrents[0].magnet_link, TORRENT_DOWNLOAD_PATH)
+    torrent_file = TorrentDownloader(movie.torrents[0].magnet_link, str(TORRENT_DOWNLOAD_PATH))
     asyncio.run(torrent_file.start_download())
 
 
