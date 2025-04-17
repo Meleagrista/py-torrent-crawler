@@ -13,7 +13,7 @@ requests = "^2.32.3"
 pydantic = "^2.11.1"
 selenium = "^4.30.0"
 webdriver-manager = "^4.0.2"
-libtorrent = {path = "config/libtorrent-2.0.11-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl"}
+libtorrent = {path = "dist/libtorrent-2.0.11-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl"}
 torrentp = "^0.2.3"
 
 [build-system]

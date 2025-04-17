@@ -342,7 +342,7 @@ files = [
 
 [package.source]
 type = "file"
-url = "config/libtorrent-2.0.11-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl"
+url = "dist/libtorrent-2.0.11-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl"
 
 [[package]]
 name = "outcome"
@@ -755,4 +755,4 @@ h11 = ">=0.9.0,<1"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.12"
-content-hash = "cc66cd15e6a57d415fbdc115a4ec74e357b436a3930a63d22cdbd83edcf1f9f3"
+content-hash = "ca7fd81ba5ddf5d75fe4742358c1fb55dc661d9a0592c87c20f35ba09002a69a"
