@@ -1,8 +1,13 @@
 import os
 from pathlib import Path
 
-default_download_path = Path.home() / 'Downloads'
+SRC_ROOT = Path(__file__).parent.parent
+
+default_download_path = SRC_ROOT / 'devops/bind'
 TORRENT_DOWNLOAD_PATH = Path(os.getenv('TORRENT_DOWNLOAD_PATH', default_download_path))
+
+# Create the directory if it doesn't exist
+TORRENT_DOWNLOAD_PATH.mkdir(parents=True, exist_ok=True)
 
 default_torrent_base_url = 'https://1337x.to'
 TORRENT_BASE_URL = os.getenv('TORRENT_BASE_URL', default_torrent_base_url)

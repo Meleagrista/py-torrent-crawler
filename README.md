@@ -8,7 +8,7 @@ Dedicated space for codebase and documentation of my personal project - a API wr
 
 ## Roadmap
 - [X] Add Docker image for Windows usage.
-- [ ] Add mechanism to dowload movie outside image.
+- [X] Add mechanism to download movie outside image.
 - [ ] Update search function to be more user-friendly (add a loading bar).
 - [ ] Update console output appearance.
 - [ ] Update download bar.

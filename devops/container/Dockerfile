@@ -19,6 +19,9 @@ RUN curl -sSL https://install.python-poetry.org | python3 - \
 # Set working directory
 WORKDIR /app
 
+# Add this line to fix import issues
+ENV PYTHONPATH=/app
+
 # Configure Poetry to not use virtualenvs
 RUN --mount=type=bind,source=src,target=src \
     --mount=type=bind,source=dist,target=dist \
@@ -31,3 +34,5 @@ RUN --mount=type=bind,source=src,target=src \
 RUN apt-get update && apt-get install -y \
     chromium chromium-driver \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+ENTRYPOINT ["poetry", "run", "python3", "-m", "src.main"]

@@ -1,9 +1,17 @@
 IMAGE_NAME=py-torrent-downloader
-TAG=dev
+IMAGE_TAG=dev
 CONTAINER_NAME=py-torrent-downloader-container
+BIND_PATH ?= $(shell pwd)
+DOWNLOAD_PATH ?= $(shell pwd)/devops/bind
 
 build:
-	docker build -f devops/container/Dockerfile -t $(IMAGE_NAME):$(TAG) .
+	docker build -f devops/container/Dockerfile -t $(IMAGE_NAME):$(IMAGE_TAG) .
 
-run:
-	docker run --rm --name $(CONTAINER_NAME) $(IMAGE_NAME):$(TAG)
+run: build
+	docker run -it --rm \
+		--name $(CONTAINER_NAME) \
+		--env-file config/dev.env \
+		--network host \
+		-v $(BIND_PATH):/app \
+		-v $(DOWNLOAD_PATH):/app/devops/bind \
+		$(IMAGE_NAME):$(IMAGE_TAG)
