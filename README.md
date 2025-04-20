@@ -13,3 +13,4 @@ Dedicated space for codebase and documentation of my personal project - a API wr
 ### 2025-04-21
 - [ ] Add a retry mechanism for failed requests.
 - [ ] Update HTML parser to extract title from different container.
+- [ ] Update Genre enum for better readability.
