@@ -13,5 +13,5 @@ run: build
 		--env-file config/dev.env \
 		--network host \
 		-v $(BIND_PATH):/app \
-		-v $(DOWNLOAD_PATH):/app/devops/bind \
+		-v $(DOWNLOAD_PATH):/root/downloads \
 		$(IMAGE_NAME):$(IMAGE_TAG)

@@ -3,20 +3,20 @@ from pathlib import Path
 
 SRC_ROOT = Path(__file__).parent.parent
 
-default_download_path = SRC_ROOT / 'devops/bind'
-TORRENT_DOWNLOAD_PATH = Path(os.getenv('TORRENT_DOWNLOAD_PATH', default_download_path))
+default_download_path = Path.home() / 'downloads'
+TORRENT_DOWNLOAD_PATH = default_download_path
+
+default_base_url = 'https://1337x.to'
+TORRENT_BASE_URL = default_base_url
+
+default_search_depth = 2
+TORRENT_SEARCH_DEPTH = int(os.getenv('SEARCH_DEPTH', default_search_depth))
+
+default_supported_languages = 'English, Spanish'
+TORRENT_SUPPORTED_LANGUAGES = os.getenv('SUPPORTED_LANGUAGES', default_supported_languages).replace(' ', '').split(',')
 
 # Create the directory if it doesn't exist
 TORRENT_DOWNLOAD_PATH.mkdir(parents=True, exist_ok=True)
-
-default_torrent_base_url = 'https://1337x.to'
-TORRENT_BASE_URL = os.getenv('TORRENT_BASE_URL', default_torrent_base_url)
-
-default_number_of_links = 5
-NUMBER_OF_LINKS = int(os.getenv('NUMBER_OF_LINKS', default_number_of_links))
-
-default_languages = 'English, Spanish'
-LANGUAGES = os.getenv('LANGUAGES', default_languages).replace(' ', '').split(',')
 
 default_chrome_binary_path = '/usr/bin/chromium'
 CHROME_BINARY = os.environ.get("CHROME_BINARY", default_chrome_binary_path)

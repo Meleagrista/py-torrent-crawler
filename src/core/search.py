@@ -7,13 +7,9 @@ from bs4 import BeautifulSoup
 
 from src.constants import TORRENT_BASE_URL
 from src.schemas.movie_schema import Movie
-from src.utils.requests import fecther
+from src.utils.requests_utils import requests
 
 logger = logging.getLogger(__name__)
-logging.basicConfig(
-    level=logging.INFO,
-    format="[%(levelname)s] %(message)s"
-)
 
 
 class MovieSearch:
@@ -61,7 +57,7 @@ class MovieSearch:
         formatted_query = urllib.parse.quote_plus(query)
         search_url = self._search_url.format(query=formatted_query)
 
-        response = fecther.fetch_url(search_url)
+        response = requests.fetch_url(search_url)
         if not response:
             return set()
 
@@ -84,7 +80,7 @@ class MovieSearch:
         while torrent_links:
             url = torrent_links.pop()
             start_time = time.perf_counter()
-            response = fecther.fetch_url(url)
+            response = requests.fetch_url(url)
 
             if not response:
                 continue
@@ -95,7 +91,7 @@ class MovieSearch:
 
             if movie_link:
                 movie_url = TORRENT_BASE_URL + movie_link["href"]
-                movie_response = fecther.fetch_url(movie_url)
+                movie_response = requests.fetch_url(movie_url)
 
                 if not movie_response:
                     continue

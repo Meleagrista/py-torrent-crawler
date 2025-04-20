@@ -4,7 +4,7 @@ from torrentp import TorrentDownloader
 
 from src.constants import TORRENT_DOWNLOAD_PATH
 from src.schemas.movie_schema import Movie
-from src.search import MovieSearch
+from src.core.search import MovieSearch
 
 
 def display(movies: list[Movie]):
