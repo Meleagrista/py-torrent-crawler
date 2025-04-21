@@ -6,7 +6,6 @@ from typing import Set
 from bs4 import BeautifulSoup
 from rich.console import Console
 from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn
-from tqdm import tqdm
 from time import sleep
 
 from src.constants import TORRENT_BASE_URL
@@ -15,6 +14,13 @@ from src.utils.requests import requests
 
 logger = logging.getLogger(__name__)
 
+class ElapsedTimeColumn(TextColumn):
+    """Custom column to format elapsed time in HH:MM:SS"""
+    def render(self, task):
+        elapsed_time = task.elapsed
+        formatted_time = time.strftime("%H:%M:%S", time.gmtime(elapsed_time))  # Format elapsed time
+        return formatted_time
+
 
 class SearchEngine:
     def __init__(self):
@@ -22,6 +28,10 @@ class SearchEngine:
 
         self._movie_search_url = TORRENT_BASE_URL + "/sort-category-search/{query}/Movies/seeders/desc/1/"
         self._movie_store = {}
+
+    @property
+    def movies(self) -> list[Movie]:
+        return list(self._movie_store.values())
 
     def search(self, query: str) -> list['Movie']:
         movies = set()
@@ -41,9 +51,9 @@ class SearchEngine:
         with Progress(
                 TextColumn("{task.description}"),
                 SpinnerColumn(),
-                BarColumn(),
+                BarColumn(complete_style="green"),
                 TextColumn("[progress.completed]{task.completed}/{task.total}"),
-                TextColumn("[progress.time]{task.elapsed}"),
+                ElapsedTimeColumn("[{task.elapsed}]"),
                 transient=True
         ) as progress:
             task = progress.add_task("Processing movies", total=len(urls))

@@ -44,5 +44,16 @@ def search(movie):
         for movie in movies:
             movie.print_row()
 
+@cli.command("history", help_text="Displays the movie search history.")
+def history():
+    movies = search_engine.movies
+
+    if not movies:
+        print("No movies found.")
+    else:
+        Movie.print_header()
+        for movie in movies:
+            movie.print_row()
+
 if __name__ == "__main__":
     cli.start()
