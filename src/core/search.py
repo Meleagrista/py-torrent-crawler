@@ -4,11 +4,11 @@ import urllib.parse
 from typing import Set
 
 from bs4 import BeautifulSoup
-from rich.console import Console
 from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn
 from time import sleep
 
 from src.constants import TORRENT_BASE_URL
+from src.core.cli import console
 from src.schemas.movie_schema import Movie
 from src.utils.requests import requests
 
@@ -24,7 +24,6 @@ class ElapsedTimeColumn(TextColumn):
 
 class SearchEngine:
     def __init__(self):
-        self._console = Console(force_terminal=True)
 
         self._movie_search_url = TORRENT_BASE_URL + "/sort-category-search/{query}/Movies/seeders/desc/1/"
         self._movie_store = {}
@@ -40,6 +39,7 @@ class SearchEngine:
         with Progress(
                 SpinnerColumn(),
                 TextColumn("{task.description}"),
+                console=console,
                 transient=True
         ) as progress:
             task = progress.add_task("Fetching movie links...", total=None)
@@ -54,6 +54,7 @@ class SearchEngine:
                 BarColumn(complete_style="green"),
                 TextColumn("[progress.completed]{task.completed}/{task.total}"),
                 ElapsedTimeColumn("[{task.elapsed}]"),
+                console=console,
                 transient=True
         ) as progress:
             task = progress.add_task("Processing movies", total=len(urls))

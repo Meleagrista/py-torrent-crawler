@@ -28,28 +28,35 @@ logging.basicConfig(
 )
 
 from src.core.search import SearchEngine
-from src.core.cli import CLI
+from src.core.cli import CLI, console
 
 cli = CLI()
 search_engine = SearchEngine()
 
-@cli.command("search", arguments=["movie"], help_text="Scrapes the page for the given movie name.")
+@cli.command(
+    "search",
+    arguments=[("title", "Title of the movie to search for")],
+    help_text="Scrapes the page for the given movie title."
+)
 def search(movie):
     movies = list(search_engine.search(movie))
 
     if not movies:
-        print("No results found.")
+        console.print("[red]No results found.[/red]")
     else:
         Movie.print_header()
         for movie in movies:
             movie.print_row()
 
-@cli.command("history", help_text="Displays the movie search history.")
+@cli.command(
+    "history",
+    help_text="Displays the movie search history."
+)
 def history():
     movies = search_engine.movies
 
     if not movies:
-        print("No movies found.")
+        console.print("[yellow]No movies found.[/yellow]")
     else:
         Movie.print_header()
         for movie in movies:
