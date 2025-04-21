@@ -13,6 +13,18 @@ from webdriver_manager.chrome import ChromeDriverManager
 
 logger = logging.getLogger(__name__)
 
+ERROR_INDICATORS = [
+        "bad search request",
+        "bad category",
+        "access denied",
+        "error 403",
+        "you don't have permission",
+        "page not found",
+        "not available",
+        "invalid request",
+        "no results found"
+    ]
+
 class RobustFetcher:
 
     def __init__(self):
@@ -44,10 +56,12 @@ class RobustFetcher:
             logger.debug("Fetched successfully with requests.")
             return str(response.text)
         except Exception as e:
+            # TODO: Find the exact Exception type.
             logger.warning(f"Requests failed for {url}. Falling back to Selenium.")
             try:
                 self.driver.get(url)
                 logger.debug("Fetched successfully with Selenium.")
+                # TODO: Add a check for the HTML content to ensure it's loaded.
                 return str(self.driver.page_source)
             except Exception as se:
                 logger.error(f"Selenium also failed for {url}: {se}")

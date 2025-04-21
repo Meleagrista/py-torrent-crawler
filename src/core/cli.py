@@ -1,6 +1,5 @@
 import shlex
 
-
 class CLI:
     def __init__(self):
         self.commands = {}

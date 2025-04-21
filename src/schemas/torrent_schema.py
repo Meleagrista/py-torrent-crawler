@@ -133,7 +133,7 @@ class Comment(BaseModel):
 from urllib.parse import urlparse
 
 from src.constants import TORRENT_SUPPORTED_LANGUAGES
-from src.utils.requests_utils import requests
+from src.utils.requests import requests
 
 
 class Torrent(Object):

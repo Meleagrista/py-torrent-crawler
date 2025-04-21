@@ -4,13 +4,18 @@ Dedicated space for codebase and documentation of my personal project - a API wr
 ## Roadmap
 - [X] Add Docker image for Windows usage.
 - [X] Add mechanism to download movie outside image.
-- [ ] Update search function to be more user-friendly (add a loading bar).
+- [X] Update search function to be more user-friendly (add a loading bar).
 - [ ] Update console output appearance.
 - [ ] Update download bar.
 - [X] Update GUI controls to a command line interface.
 - [ ] Add new GUI commands.
 
-### 2025-04-21
+### 2025-04-20
 - [ ] Add a retry mechanism for failed requests.
-- [ ] Update HTML parser to extract title from different container.
-- [ ] Update Genre enum for better readability.
+- [X] Update HTML parser to extract title from different container.
+- [X] Update Genre enum for better readability.
+
+### 2025-04-21
+- [ ] Update `help` command to show more information.
+- [ ] Add a command history feature.
+- [ ] Update CLI to use `rich` library.

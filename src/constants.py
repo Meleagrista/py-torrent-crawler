@@ -20,3 +20,12 @@ TORRENT_DOWNLOAD_PATH.mkdir(parents=True, exist_ok=True)
 
 default_chrome_binary_path = '/usr/bin/chromium'
 CHROME_BINARY = os.environ.get("CHROME_BINARY", default_chrome_binary_path)
+
+MOVIE_TABLE_FORMAT = {
+    'id_width': 10,
+    'title_width': 50,
+    'rating_width': 6,
+    'genres_width': 40,
+    'torrents_width': 8,
+    'margin': 2
+}

@@ -4,7 +4,7 @@ from torrentp import TorrentDownloader
 
 from src.constants import TORRENT_DOWNLOAD_PATH
 from src.schemas.movie_schema import Movie
-from src.core.search import MovieSearch
+from src.core.search import SearchEngine
 
 
 def display(movies: list[Movie]):
@@ -22,7 +22,7 @@ def download(movie: Movie):
 
 
 def main():
-    search_engine = MovieSearch()
+    search_engine = SearchEngine()
 
     while True:
         query = input("Enter a movie name to search (or type 'exit' to quit): ")

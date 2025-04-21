@@ -1,50 +1,67 @@
 import logging
 import time
 import urllib.parse
-
 from typing import Set
+
 from bs4 import BeautifulSoup
+from rich.console import Console
+from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn
+from tqdm import tqdm
+from time import sleep
 
 from src.constants import TORRENT_BASE_URL
 from src.schemas.movie_schema import Movie
-from src.utils.requests_utils import requests
+from src.utils.requests import requests
 
 logger = logging.getLogger(__name__)
 
 
-class MovieSearch:
-    ERROR_INDICATORS = [
-        "bad search request",
-        "bad category",
-        "access denied",
-        "error 403",
-        "you don't have permission",
-        "page not found",
-        "not available",
-        "invalid request",
-        "no results found"
-    ]
-
+class SearchEngine:
     def __init__(self):
-        self._search_url = TORRENT_BASE_URL + "/sort-category-search/{query}/Movies/seeders/desc/1/"
+        self._console = Console(force_terminal=True)
 
-    def search(self, query: str) -> Set['Movie']:
-        """
-        Searches for movies based on the given query.
+        self._movie_search_url = TORRENT_BASE_URL + "/sort-category-search/{query}/Movies/seeders/desc/1/"
+        self._movie_store = {}
 
-        :param query: Movie name or keyword to search for.
-        :return: A set of Movie objects.
-        """
-        urls = self._get_movie_links(query)
+    def search(self, query: str) -> list['Movie']:
         movies = set()
 
-        for url in urls:
-            try:
-                movie = Movie.from_url(url)
-                movies.add(movie)
-            except Exception as e:
-                logger.error(f"Error fetching movie from URL {url}: {e}")
-                continue
+        # For style references: https://www.youtube.com/watch?v=CLkLvOmNOjc
+        with Progress(
+                SpinnerColumn(),
+                TextColumn("{task.description}"),
+                transient=True
+        ) as progress:
+            task = progress.add_task("Fetching movie links...", total=None)
+            urls = self._get_movie_links(query)
+            progress.update(task, description="[green]Movie links fetched successfully!")
+            sleep(1)
+            progress.stop()
+
+        with Progress(
+                TextColumn("{task.description}"),
+                SpinnerColumn(),
+                BarColumn(),
+                TextColumn("[progress.completed]{task.completed}/{task.total}"),
+                TextColumn("[progress.time]{task.elapsed}"),
+                transient=True
+        ) as progress:
+            task = progress.add_task("Processing movies", total=len(urls))
+
+            for url in urls:
+                try:
+                    movie = Movie.from_url(url)
+                    movies.add(movie)
+                except Exception as e:
+                    logger.error(f"Error fetching movie from URL {url}: {e}")
+
+                progress.update(task, advance=1)
+
+        movies = list(movies)
+
+        for movie in movies:
+            self._movie_store[movie.id] = movie
+
         return movies
 
     def _get_movie_links(self, query: str) -> Set[str]:
@@ -55,14 +72,10 @@ class MovieSearch:
         :return: Set of movie page URLs.
         """
         formatted_query = urllib.parse.quote_plus(query)
-        search_url = self._search_url.format(query=formatted_query)
+        search_url = self._movie_search_url.format(query=formatted_query)
 
         response = requests.fetch_url(search_url)
         if not response:
-            return set()
-
-        if any(err in response for err in self.ERROR_INDICATORS) or len(response) < 100:
-            logger.error("Search failed or returned an invalid page.")
             return set()
 
         soup = BeautifulSoup(response, 'html.parser')

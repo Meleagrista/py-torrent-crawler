@@ -27,11 +27,11 @@ logging.basicConfig(
     handlers=[handler]
 )
 
-from src.core.search import MovieSearch
+from src.core.search import SearchEngine
 from src.core.cli import CLI
 
 cli = CLI()
-search_engine = MovieSearch()
+search_engine = SearchEngine()
 
 @cli.command("search", arguments=["movie"], help_text="Scrapes the page for the given movie name.")
 def search(movie):
@@ -39,34 +39,10 @@ def search(movie):
 
     if not movies:
         print("No results found.")
-        return
-
-    # Define column widths
-    id_width = 12
-    title_width = 50
-    rating_width = 6
-    genres_width = 40
-    torrents_width = 8
-    poster_width = 65
-
-    Movie.print_header(
-        id_width=id_width,
-        title_width=title_width,
-        rating_width=rating_width,
-        genres_width=genres_width,
-        torrents_width=torrents_width,
-        poster_width=poster_width
-    )
-
-    for movie in movies:
-        movie.print_row(
-            id_width=id_width,
-            title_width=title_width,
-            rating_width=rating_width,
-            genres_width=genres_width,
-            torrents_width=torrents_width,
-            poster_width=poster_width
-        )
+    else:
+        Movie.print_header()
+        for movie in movies:
+            movie.print_row()
 
 if __name__ == "__main__":
     cli.start()

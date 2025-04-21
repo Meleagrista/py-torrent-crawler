@@ -3,10 +3,10 @@ from bs4 import BeautifulSoup
 from pydantic import Field
 from enum import Enum
 
-from src.constants import TORRENT_BASE_URL, TORRENT_SEARCH_DEPTH
+from src.constants import TORRENT_BASE_URL, TORRENT_SEARCH_DEPTH, MOVIE_TABLE_FORMAT
 from src.schemas.media_schema import Media, MediaType
 from src.schemas.torrent_schema import Torrent
-from src.utils.requests_utils import requests
+from src.utils.requests import requests
 
 
 class Genre(str, Enum):
@@ -73,9 +73,11 @@ class Movie(Media):
 
         soup = BeautifulSoup(response, 'html.parser')
 
-        title_element = soup.select_one(".torrent-detail-info h3 a")
+        title_element = soup.select_one(".featured-heading strong")
         title = title_element.text.strip() if title_element else None
-        if not title:
+        if title:
+            title = title.split("Download", 1)[-1].split("Torrents", 1)[0].strip()
+        else:
             raise ValueError("No title found for URL.")
 
         genres = tuple(Genre(g.text.strip()) for g in soup.select(".torrent-category span") if g.text.strip())
@@ -84,7 +86,7 @@ class Movie(Media):
 
         rating_element = soup.select_one(".rating .red")
         rating = (
-            float(rating_element["style"].split(":")[1].strip("%;")) / 100
+            float(rating_element["style"].split(":")[1].strip("%;"))
             if rating_element else 0.0
         )
 
@@ -130,52 +132,34 @@ class Movie(Media):
         return movie
 
     @classmethod
-    def print_header(
-        cls,
-        id_width: int = 15,
-        title_width: int = 40,
-        rating_width: int = 10,
-        genres_width: int = 60,
-        torrents_width: int = 10,
-        poster_width: int = 60,
-        margin: int = 2
-    ):
+    def print_header(cls, **kwargs):
+        settings = {**MOVIE_TABLE_FORMAT, **kwargs}
+
         def pad(text: str, width: int, extra_margin: int) -> str:
             return text.ljust(width + extra_margin)
 
         headers = [
-            pad("ID", id_width, margin),
-            pad("Title", title_width, margin),
-            pad("Rating", rating_width, margin),
-            pad("Genres", genres_width, margin),
-            pad("Torrents", torrents_width, margin),
-            pad("Poster", poster_width, margin),
+            pad("ID", settings['id_width'], settings['margin']),
+            pad("Title", settings['title_width'], settings['margin']),
+            pad("Rating", settings['rating_width'], settings['margin']),
+            pad("Genres", settings['genres_width'], settings['margin']),
+            pad("Torrents", settings['torrents_width'], settings['margin']),
         ]
 
         print(''.join(headers))
         print('-' * sum([
-            id_width + margin,
-            title_width + margin,
-            rating_width + margin,
-            genres_width + margin,
-            torrents_width + margin,
-            poster_width + margin,
+            settings['id_width'] + settings['margin'],
+            settings['title_width'] + settings['margin'],
+            settings['rating_width'] + settings['margin'],
+            settings['genres_width'] + settings['margin'],
+            settings['torrents_width'] + settings['margin']
         ]))
 
-    def print_row(
-            self,
-            id_width: int = 15,
-            title_width: int = 40,
-            rating_width: int = 10,
-            genres_width: int = 60,
-            torrents_width: int = 10,
-            poster_width: int = 60,
-            margin: int = 2
-    ):
-        """ Prints the movie's row in a formatted table-like output, using movie's id as identifier """
+    def print_row(self, **kwargs):
+        settings = {**MOVIE_TABLE_FORMAT, **kwargs}
 
         def truncate_and_pad(text: str, width: int, extra_margin: int) -> str:
-            max_len = width - 3  # room for '...'
+            max_len = width - 3
             if len(text) > width:
                 return text[:max_len] + "..." + " " * extra_margin
             else:
@@ -188,22 +172,14 @@ class Movie(Media):
                 return text.rjust(width) + " " * extra_margin
 
         def format_rating(movie_rating: float, width: int) -> str:
-            if movie_rating == 0.0:
-                return "-".rjust(width)
-            return str(int(movie_rating * 100)).rjust(width)
+            if movie_rating <= 1.0:
+                movie_rating = movie_rating * 100
+            return "-".rjust(width) if movie_rating == 0.0 else str(movie_rating).rjust(width)
 
-        idx = truncate_and_pad(str(self.id), id_width, margin)
-        title = truncate_and_pad(self.title, title_width, margin)
-        rating = format_rating(self.rating, rating_width) + " " * margin
-        genres = truncate_and_pad(', '.join(genre.name for genre in self.genres), genres_width, margin)
-        torrents = truncate_and_rpad(str(self.torrents_count), torrents_width, margin)
-        poster = truncate_and_pad(self.poster, poster_width, margin)
+        idx = truncate_and_pad(str(self.id), settings['id_width'], settings['margin'])
+        title = truncate_and_pad(self.title, settings['title_width'], settings['margin'])
+        rating = format_rating(self.rating, settings['rating_width']) + " " * settings['margin']
+        genres = truncate_and_pad(', '.join(genre.capitalize() for genre in self.genres), settings['genres_width'], settings['margin'])
+        torrents = truncate_and_rpad(str(self.torrents_count), settings['torrents_width'], settings['margin'])
 
-        print(
-            f"{idx}"
-            f"{title}"
-            f"{rating}"
-            f"{genres}"
-            f"{torrents}"
-            f"{poster}"
-        )
+        print(f"{idx}{title}{rating}{genres}{torrents}")
