@@ -22,3 +22,4 @@ Dedicated space for codebase and documentation of my personal project - a API wr
 
 ### 2025-04-27
 - [ ] Update movie data, parse year from name.
+- [ ] Make a simple persistence system for the searched movies.
