@@ -7,7 +7,7 @@ DOWNLOAD_PATH ?= $(shell pwd)/devops/bind
 build:
 	docker build -f devops/container/Dockerfile -t $(IMAGE_NAME):$(IMAGE_TAG) .
 
-run: build
+run:
 	docker run -it --rm \
 		--name $(CONTAINER_NAME) \
 		--env-file config/dev.env \

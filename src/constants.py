@@ -1,5 +1,29 @@
+import logging
 import os
 from pathlib import Path
+
+class TruncateFormatter(logging.Formatter):
+    def __init__(self, fmt=None, datefmt=None, style='%', max_length=500):
+        super().__init__(fmt=fmt, datefmt=datefmt, style=style)
+        self.max_length = max_length
+
+    def format(self, record):
+        msg = super().format(record)
+        if len(msg) > self.max_length:
+            msg = msg[:self.max_length - 3] + ".."
+        return msg
+
+script_name = os.path.basename(__file__)
+
+handler = logging.StreamHandler()
+handler.setFormatter(TruncateFormatter(
+    fmt=f"[%(levelname)s] <{script_name}> %(message)s", max_length=200
+))
+
+logging.basicConfig(
+    level=logging.CRITICAL,
+    handlers=[handler]
+)
 
 SRC_ROOT = Path(__file__).parent.parent
 

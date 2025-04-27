@@ -158,7 +158,7 @@ class Movie(Media):
     def print_row(self, **kwargs):
         settings = {**MOVIE_TABLE_FORMAT, **kwargs}
 
-        def truncate_and_pad(text: str, width: int, extra_margin: int) -> str:
+        def truncate_and_lpad(text: str, width: int, extra_margin: int) -> str:
             max_len = width - 3
             if len(text) > width:
                 return text[:max_len] + "..." + " " * extra_margin
@@ -176,10 +176,10 @@ class Movie(Media):
                 movie_rating = movie_rating * 100
             return "-".rjust(width) if movie_rating == 0.0 else str(movie_rating).rjust(width)
 
-        idx = truncate_and_pad(str(self.id), settings['id_width'], settings['margin'])
-        title = truncate_and_pad(self.title, settings['title_width'], settings['margin'])
+        idx = truncate_and_lpad(str(self.id).strip(), settings['id_width'], settings['margin'])
+        title = truncate_and_lpad(self.title, settings['title_width'], settings['margin'])
         rating = format_rating(self.rating, settings['rating_width']) + " " * settings['margin']
-        genres = truncate_and_pad(', '.join(genre.capitalize() for genre in self.genres), settings['genres_width'], settings['margin'])
-        torrents = truncate_and_rpad(str(self.torrents_count), settings['torrents_width'], settings['margin'])
+        genres = truncate_and_lpad(', '.join(genre.capitalize() for genre in self.genres), settings['genres_width'], settings['margin'])
+        torrents = truncate_and_rpad(str(self.torrents_count).strip(), settings['torrents_width'], settings['margin'])
 
         print(f"{idx}{title}{rating}{genres}{torrents}")

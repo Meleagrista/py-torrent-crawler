@@ -5,7 +5,7 @@ Dedicated space for codebase and documentation of my personal project - a API wr
 - [X] Add Docker image for Windows usage.
 - [X] Add mechanism to download movie outside image.
 - [X] Update search function to be more user-friendly (add a loading bar).
-- [ ] Update console output appearance.
+- [X] Update console output appearance.
 - [ ] Update download bar.
 - [X] Update GUI controls to a command line interface.
 - [ ] Add new GUI commands.
@@ -19,3 +19,6 @@ Dedicated space for codebase and documentation of my personal project - a API wr
 - [ ] Update `help` command to show more information.
 - [ ] Add a command history feature.
 - [ ] Update CLI to use `rich` library.
+
+### 2025-04-27
+- [ ] Update movie data, parse year from name.

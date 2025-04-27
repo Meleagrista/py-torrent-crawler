@@ -1,8 +1,8 @@
+from src.constants import TORRENT_DOWNLOAD_PATH
+
 import asyncio
 
-from torrentp import TorrentDownloader
-
-from src.constants import TORRENT_DOWNLOAD_PATH
+from src.core.download import TorrentDownloaderWrapper
 from src.schemas.movie_schema import Movie
 from src.core.search import SearchEngine
 
@@ -17,7 +17,7 @@ def display(movies: list[Movie]):
 
 
 def download(movie: Movie):
-    torrent_file = TorrentDownloader(movie.torrents[0].magnet_link, str(TORRENT_DOWNLOAD_PATH))
+    torrent_file = TorrentDownloaderWrapper(movie.torrents[0].magnet_link, str(TORRENT_DOWNLOAD_PATH))
     asyncio.run(torrent_file.start_download())
 
 

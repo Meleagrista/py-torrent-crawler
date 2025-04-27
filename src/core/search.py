@@ -1,11 +1,15 @@
 import logging
 import time
 import urllib.parse
-from typing import Set
+from typing import Set, Optional
 
 from bs4 import BeautifulSoup
-from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn
+from rich.live import Live
+from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TimeElapsedColumn
 from time import sleep
+
+from rich.spinner import Spinner
+from rich.text import Text
 
 from src.constants import TORRENT_BASE_URL
 from src.core.cli import console
@@ -14,66 +18,65 @@ from src.utils.requests import requests
 
 logger = logging.getLogger(__name__)
 
-class ElapsedTimeColumn(TextColumn):
-    """Custom column to format elapsed time in HH:MM:SS"""
-    def render(self, task):
-        elapsed_time = task.elapsed
-        formatted_time = time.strftime("%H:%M:%S", time.gmtime(elapsed_time))  # Format elapsed time
-        return formatted_time
-
 
 class SearchEngine:
     def __init__(self):
 
         self._movie_search_url = TORRENT_BASE_URL + "/sort-category-search/{query}/Movies/seeders/desc/1/"
         self._movie_store = {}
+        self._movie_id_store = {}
 
     @property
     def movies(self) -> list[Movie]:
         return list(self._movie_store.values())
 
+    def get(self, idx: int) -> Optional[Movie]:
+        return self._retrieve_movie(movie_id=idx)
+
     def search(self, query: str) -> list['Movie']:
         movies = set()
 
-        # For style references: https://www.youtube.com/watch?v=CLkLvOmNOjc
-        with Progress(
-                SpinnerColumn(),
-                TextColumn("{task.description}"),
-                console=console,
-                transient=True
-        ) as progress:
-            task = progress.add_task("Fetching movie links...", total=None)
+        with Live(console=console, transient=True) as live:
+            live.update(Spinner(name='dots', text="Fetching movie links...", style='green'))
             urls = self._get_movie_links(query)
-            progress.update(task, description="[green]Movie links fetched successfully!")
-            sleep(1)
-            progress.stop()
+            live.update(Text("Movie links fetched successfully!", style='green'))
+            sleep(2)
 
         with Progress(
                 TextColumn("{task.description}"),
                 SpinnerColumn(),
                 BarColumn(complete_style="green"),
-                TextColumn("[progress.completed]{task.completed}/{task.total}"),
-                ElapsedTimeColumn("[{task.elapsed}]"),
+                TextColumn("{task.completed}/{task.total}", style="progress.completed"),
+                TimeElapsedColumn(),
                 console=console,
                 transient=True
         ) as progress:
             task = progress.add_task("Processing movies", total=len(urls))
-
             for url in urls:
                 try:
-                    movie = Movie.from_url(url)
+                    movie = self._retrieve_movie(url) or Movie.from_url(url)
                     movies.add(movie)
                 except Exception as e:
                     logger.error(f"Error fetching movie from URL {url}: {e}")
-
                 progress.update(task, advance=1)
 
-        movies = list(movies)
-
         for movie in movies:
-            self._movie_store[movie.id] = movie
+            self._store_movie(movie)
 
-        return movies
+        return list(movies)
+
+    def _store_movie(self, movie: Movie):
+        self._movie_store[movie.url] = movie
+        self._movie_id_store[movie.id] = movie
+
+    def _retrieve_movie(self, movie_url: str = None, movie_id: int = None) -> Optional[Movie]:
+        if movie_id and movie_url:
+            raise ValueError("Both movie_url and movie_id cannot be provided at the same time.")
+        if movie_url:
+            return self._movie_store.get(movie_url, None)
+        if movie_id:
+            return self._movie_id_store.get(movie_id, None)
+        raise ValueError("Either movie_url or movie_id must be provided.")
 
     def _get_movie_links(self, query: str) -> Set[str]:
         """

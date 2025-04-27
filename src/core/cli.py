@@ -1,7 +1,9 @@
 import shlex
 
+from pygments import highlight
 from rich.console import Console
 from rich.prompt import Prompt
+from rich.text import Text
 
 console = Console(force_terminal=True)
 
@@ -21,7 +23,7 @@ class CLI:
         Register a command.
         :param name: command name
         :param arguments: List of tuples (arg_name, description)
-        :param keyword_args: Dict like {'-n': ('name', 'desc'), '--name': ('name', 'desc')}
+        :param keyword_args: Dict like {'-n': ('name', 'desc', 'type')} '--name': ('name', 'desc', 'type')}
         :param help_text: Description of the command
         """
         def decorator(func):
@@ -43,7 +45,7 @@ class CLI:
                     continue
 
                 if raw_input.lower() in ['exit', 'quit']:
-                    console.print("Exiting...")
+                    console.print("Exiting..")
                     break
 
                 if raw_input.lower() == 'help':
@@ -79,8 +81,13 @@ class CLI:
                             console.print(f"[red]Unknown keyword argument '{part}'[/red]")
                             break
                         key = expected_kwargs[part][0]  # canonical name
-                        kwargs[key] = args_and_kwargs[i + 1]
-                        i += 2
+                        value = args_and_kwargs[i + 1]
+                        if not value.startswith("-"):
+                            kwargs[key] = value
+                            i += 2
+                        else:
+                            kwargs[key] = True
+                            i += 1
                     else:
                         positional.append(part)
                         i += 1
@@ -131,9 +138,18 @@ class CLI:
 
             # Group keyword args by canonical name
             kw_by_name = {}
-            for k, (canonical, desc) in cmd["kwargs"].items():
-                kw_by_name.setdefault(canonical, {"flags": [], "desc": desc})["flags"].append(k)
+            for k, (canonical, desc, value) in cmd["kwargs"].items():
+                kw_by_name.setdefault(canonical, {"flags": [], "desc": desc, "type": value})["flags"].append(k)
 
             for kw_name, info in kw_by_name.items():
                 flags = ", ".join(info["flags"])
-                console.print(f"{' '*4}[blue]{flags:<25}[/blue] {info['desc']}")
+                type_hint = f"{info['type']}" if info.get('type') else ""
+
+                text = Text(" " * 4)
+                text.append(flags, style="blue")
+                if type_hint:
+                    text.append(f" <{type_hint}>", style="dim")
+                text.pad_right(24 - len(text.plain))
+                text.append(info['desc'])
+
+                console.print(text, highlight=False)

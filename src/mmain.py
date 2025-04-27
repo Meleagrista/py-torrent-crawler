@@ -1,34 +1,12 @@
-import logging
-import os
+import asyncio
 
-from src.schemas.movie_schema import Movie
+from typing import Optional
 
-
-class TruncateFormatter(logging.Formatter):
-    def __init__(self, fmt=None, datefmt=None, style='%', max_length=500):
-        super().__init__(fmt=fmt, datefmt=datefmt, style=style)
-        self.max_length = max_length
-
-    def format(self, record):
-        msg = super().format(record)
-        if len(msg) > self.max_length:
-            msg = msg[:self.max_length - 3] + "..."
-        return msg
-
-script_name = os.path.basename(__file__)
-
-handler = logging.StreamHandler()
-handler.setFormatter(TruncateFormatter(
-    fmt=f"[%(levelname)s] <{script_name}> %(message)s", max_length=200
-))
-
-logging.basicConfig(
-    level=logging.CRITICAL,
-    handlers=[handler]
-)
-
-from src.core.search import SearchEngine
+from src.constants import TORRENT_DOWNLOAD_PATH
 from src.core.cli import CLI, console
+from src.core.download import TorrentDownloaderWrapper
+from src.core.search import SearchEngine
+from src.schemas.movie_schema import Movie
 
 cli = CLI()
 search_engine = SearchEngine()
@@ -38,8 +16,8 @@ search_engine = SearchEngine()
     arguments=[("title", "Title of the movie to search for")],
     help_text="Scrapes the page for the given movie title."
 )
-def search(movie):
-    movies = list(search_engine.search(movie))
+def search(movie_title):
+    movies = list(search_engine.search(movie_title))
 
     if not movies:
         console.print("[red]No results found.[/red]")
@@ -49,17 +27,42 @@ def search(movie):
             movie.print_row()
 
 @cli.command(
+    "download",
+    arguments=[("id", "ID of the movie to download")],
+    help_text="Downloads the movie with the given ID."
+)
+def download(movie_id):
+    movie = search_engine.get(int(movie_id))
+
+    if not movie:
+        console.print("[red]No movie found with that ID.[/red]")
+    else:
+        torrent_file = TorrentDownloaderWrapper(movie.torrents[0].magnet_link, str(TORRENT_DOWNLOAD_PATH))
+        asyncio.run(torrent_file.start_download())
+
+@cli.command(
     "history",
+    keyword_args={
+        '-n': ('number', 'Number of movies to display', 'number'),
+        '-s': ('sort', 'Sort movies by title', None),
+        '--sort': ('sort', 'Sort movies by title', None),
+    },
     help_text="Displays the movie search history."
 )
-def history():
+def history(number: Optional[int] = None, sort: bool = False):
+    if not isinstance(sort, bool):
+        console.print("[red]Invalid sort option.[/red]")
+        return
+
     movies = search_engine.movies
+    movies.sort(key=lambda x: x.title) if sort else movies
+    number = int(number) if number is not None else len(movies)
 
     if not movies:
-        console.print("[yellow]No movies found.[/yellow]")
+        console.print("[red]No results found.[/red]")
     else:
         Movie.print_header()
-        for movie in movies:
+        for movie in movies[:number]:
             movie.print_row()
 
 if __name__ == "__main__":
