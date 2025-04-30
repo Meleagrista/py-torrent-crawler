@@ -23,3 +23,8 @@ Dedicated space for codebase and documentation of my personal project - a API wr
 ### 2025-04-27
 - [ ] Update movie data, parse year from name.
 - [X] Make a simple persistence system for the searched movies.
+
+### 2025-04-31
+- [ ] Add a command to load more torrent files (choose number or language).
+- [ ] Add a keyword to load torrent files from a specific language with `/search`.
+- [ ] Add a keyword to use history with queries or years.
