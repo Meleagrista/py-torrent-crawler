@@ -1,49 +1,54 @@
-import logging
 import os
 from pathlib import Path
 
-class TruncateFormatter(logging.Formatter):
-    def __init__(self, fmt=None, datefmt=None, style='%', max_length=500):
-        super().__init__(fmt=fmt, datefmt=datefmt, style=style)
-        self.max_length = max_length
-
-    def format(self, record):
-        msg = super().format(record)
-        if len(msg) > self.max_length:
-            msg = msg[:self.max_length - 3] + ".."
-        return msg
-
-script_name = os.path.basename(__file__)
-
-handler = logging.StreamHandler()
-handler.setFormatter(TruncateFormatter(
-    fmt=f"[%(levelname)s] <{script_name}> %(message)s", max_length=200
-))
-
-logging.basicConfig(
-    level=logging.CRITICAL,
-    handlers=[handler]
-)
+# ─────────────────────────────────────────────
+# PATH CONFIGURATION
+# ─────────────────────────────────────────────
 
 SRC_ROOT = Path(__file__).parent.parent
 
-default_download_path = Path.home() / 'downloads'
-TORRENT_DOWNLOAD_PATH = default_download_path
+# Download path
+TORRENT_DOWNLOAD_PATH = Path.home() / 'downloads'
 
-default_base_url = 'https://1337x.to'
-TORRENT_BASE_URL = default_base_url
+# Cache directory for history and store files
+CACHE_DIR = Path.home() / '.cache' / 'storage'
 
-default_search_depth = 2
-TORRENT_SEARCH_DEPTH = int(os.getenv('SEARCH_DEPTH', default_search_depth))
+# ─────────────────────────────────────────────
+# FILESYSTEM INITIALIZATION
+# ─────────────────────────────────────────────
 
-default_supported_languages = 'English, Spanish'
-TORRENT_SUPPORTED_LANGUAGES = os.getenv('SUPPORTED_LANGUAGES', default_supported_languages).replace(' ', '').split(',')
-
-# Create the directory if it doesn't exist
 TORRENT_DOWNLOAD_PATH.mkdir(parents=True, exist_ok=True)
+CACHE_DIR.mkdir(parents=True, exist_ok=True)
 
-default_chrome_binary_path = '/usr/bin/chromium'
-CHROME_BINARY = os.environ.get("CHROME_BINARY", default_chrome_binary_path)
+# ─────────────────────────────────────────────
+# FILES
+# ─────────────────────────────────────────────
 
-TERMINAL_WIDTH = 120
+LOG_FILE = CACHE_DIR / '.logs'
+HISTORY_FILE = CACHE_DIR / '.history'
+MOVIE_STORE_FILE = CACHE_DIR / 'movie_store.json'
+
+# ─────────────────────────────────────────────
+# DEFAULTS & ENVIRONMENT CONFIGURATION
+# ─────────────────────────────────────────────
+
+# Base URL for torrent scraping
+TORRENT_BASE_URL = os.environ.get('TORRENT_BASE_URL', 'https://1337x.to')
+
+# Search depth (how many pages to crawl)
+TORRENT_SEARCH_DEPTH = int(os.environ.get('SEARCH_DEPTH', 2))
+
+# Supported languages
+default_languages = 'English, Spanish'
+TORRENT_SUPPORTED_LANGUAGES = os.environ.get('SUPPORTED_LANGUAGES', default_languages).replace(' ', '').split(',')
+
+# Chrome binary path (for headless browsing if used)
+CHROME_BINARY = os.environ.get("CHROME_BINARY", '/usr/bin/chromium')
+
+# Terminal display settings
+TERMINAL_WIDTH = int(os.environ.get("TERMINAL_WIDTH", 140))
+
+
+
+
 

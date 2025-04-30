@@ -1,13 +1,24 @@
+import os
 import shlex
+import readline
+import atexit
 
 from rich.console import Console
-from rich.prompt import Prompt
 from rich.text import Text
 
-console = Console(force_terminal=True, width=140)
+from src.constants import TERMINAL_WIDTH, HISTORY_FILE
 
-class CustomPrompt(Prompt):
-    prompt_suffix = ">>> "
+console = Console(force_terminal=True, width=TERMINAL_WIDTH)
+
+# Load previous history
+if os.path.exists(HISTORY_FILE):
+    readline.read_history_file(HISTORY_FILE)
+else:
+    with open(HISTORY_FILE, 'w') as f:
+        pass
+
+# Save history on exit
+atexit.register(readline.write_history_file, HISTORY_FILE)
 
 
 class CLI:
@@ -40,12 +51,16 @@ class CLI:
         console.print("[dim]Custom CLI[/dim]. Type 'help' to see available commands. Type 'exit' to quit.")
         while True:
             try:
-                raw_input = CustomPrompt.ask().strip()
+                raw_input = input(">>> ").strip()
                 if not raw_input:
                     continue
+                else:
+                    if readline.get_current_history_length() == 0 or readline.get_history_item(readline.get_current_history_length()) != raw_input:
+                        readline.add_history(raw_input)
 
+                # TODO Add a spinner here.
                 if raw_input.lower() in ['exit', 'quit']:
-                    console.print("Exiting..")
+                    console.print("Exiting...")
                     break
 
                 if raw_input.lower() == 'help':
@@ -101,6 +116,7 @@ class CLI:
             except Exception as e:
                 console.print(f"[red]An error occurred:[/red] {e}")
 
+    # TODO Use Tables for the formatting.
     def print_help(self):
         console.print(f"[bold]Usage:[/bold]")
         console.print(f"{' '*4}command [options] [arguments]\n", markup=False)

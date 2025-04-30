@@ -1,9 +1,11 @@
+import json
 import logging
 import time
 import urllib.parse
 from typing import Set, Optional
 
 from bs4 import BeautifulSoup
+from pydantic import ValidationError
 from rich.live import Live
 from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TimeElapsedColumn
 from time import sleep
@@ -11,7 +13,7 @@ from time import sleep
 from rich.spinner import Spinner
 from rich.text import Text
 
-from src.constants import TORRENT_BASE_URL
+from src.constants import TORRENT_BASE_URL, MOVIE_STORE_FILE
 from src.core.cli import console
 from src.schemas.movie_schema import Movie
 from src.utils.requests import requests
@@ -21,10 +23,11 @@ logger = logging.getLogger(__name__)
 
 class SearchEngine:
     def __init__(self):
-
         self._movie_search_url = TORRENT_BASE_URL + "/sort-category-search/{query}/Movies/seeders/desc/1/"
         self._movie_store = {}
         self._movie_id_store = {}
+
+        self._load_movies()
 
     @property
     def movies(self) -> list[Movie]:
@@ -60,10 +63,39 @@ class SearchEngine:
                     logger.error(f"Error fetching movie from URL {url}: {e}")
                 progress.update(task, advance=1)
 
+        self._store_movies(list(movies))
+
+        return list(movies)
+
+    def _load_movies(self):
+        if not MOVIE_STORE_FILE.exists():
+            logger.warning(f"Movie store file {MOVIE_STORE_FILE} does not exist. Creating a new one.")
+            with MOVIE_STORE_FILE.open("w", encoding="utf-8") as f:
+                json.dump([], f)
+
+        with MOVIE_STORE_FILE.open("r", encoding="utf-8") as f:
+            try:
+                data = json.load(f)
+                movies = [Movie.model_validate(movie_data) for movie_data in data]
+                self._store_movies(movies, save=False)
+            except (json.JSONDecodeError, ValidationError) as e:
+                logger.error(f"Failed to load movie store: {e}")
+
+    def _save_movies(self):
+        if not MOVIE_STORE_FILE.exists():
+            logger.error(f"Movie store file {MOVIE_STORE_FILE} cannot be found.")
+            with MOVIE_STORE_FILE.open("w", encoding="utf-8") as f:
+                json.dump([], f)
+
+        with MOVIE_STORE_FILE.open("w", encoding="utf-8") as f:
+            json.dump([m.model_dump(mode="json") for m in self._movie_store.values()], f, indent=2)
+
+    def _store_movies(self, movies: list[Movie], save: bool = True):
         for movie in movies:
             self._store_movie(movie)
 
-        return list(movies)
+        if save:
+            self._save_movies()
 
     def _store_movie(self, movie: Movie):
         self._movie_store[movie.url] = movie

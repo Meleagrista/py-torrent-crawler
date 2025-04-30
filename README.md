@@ -8,18 +8,18 @@ Dedicated space for codebase and documentation of my personal project - a API wr
 - [X] Update console output appearance.
 - [X] Update download bar.
 - [X] Update GUI controls to a command line interface.
-- [ ] Add new GUI commands.
+- [X] Add new GUI commands.
 
 ### 2025-04-20
-- [ ] Add a retry mechanism for failed requests.
+- [X] Add a retry mechanism for failed requests.
 - [X] Update HTML parser to extract title from different container.
 - [X] Update Genre enum for better readability.
 
 ### 2025-04-21
 - [X] Update `help` command to show more information.
-- [ ] Add a command history feature.
+- [X] Add a command history feature.
 - [X] Update CLI to use `rich` library.
 
 ### 2025-04-27
 - [ ] Update movie data, parse year from name.
-- [ ] Make a simple persistence system for the searched movies.
+- [X] Make a simple persistence system for the searched movies.
