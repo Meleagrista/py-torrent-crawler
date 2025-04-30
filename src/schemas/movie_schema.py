@@ -154,7 +154,6 @@ class Movie(Media):
         for movie in movies:
             table = movie.add_row(table)
 
-        test = str(table)
         console.print(table)
 
     def add_row(self, table: Table) -> Table:
@@ -162,7 +161,7 @@ class Movie(Media):
 
         id_content = Text(str(self.id).strip())
         title_content = Text(self.title)
-        rating_content = Text(f"{self.rating:.1f}")
+        rating_content = Text(f"{self.rating:.1f}" if self.rating > 0.0 else "-")
         languages_content = Text(", ".join(languages_raw))
         genre_content = Text(", ".join(g.capitalize() for g in self.genres))
         torrents_content = Text(f"{len(self.torrents)}/{self.torrents_count}")
