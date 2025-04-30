@@ -1,13 +1,28 @@
-from typing import Tuple
+from enum import Enum
+from typing import Tuple, Optional
+
 from bs4 import BeautifulSoup
 from pydantic import Field
-from enum import Enum
+from rich.box import Box
+from rich.table import Table
+from rich.text import Text
 
-from src.constants import TORRENT_BASE_URL, TORRENT_SEARCH_DEPTH, MOVIE_TABLE_FORMAT
+from src.constants import TORRENT_BASE_URL, TORRENT_SEARCH_DEPTH
+from src.core.cli import console
 from src.schemas.media_schema import Media, MediaType
 from src.schemas.torrent_schema import Torrent
 from src.utils.requests import requests
 
+DASH_HEAD: Box = Box(
+    "    \n"
+    "    \n"
+    "----\n"
+    "    \n"
+    "    \n"
+    "    \n"
+    "    \n"
+    "    \n"
+)
 
 class Genre(str, Enum):
     ACTION = "Action"
@@ -67,119 +82,125 @@ class Movie(Media):
     @classmethod
     def from_url(cls, url: str) -> 'Movie':
         response = requests.fetch_url(url)
-
         if not response:
             raise ValueError("Failed to fetch the URL.")
 
         soup = BeautifulSoup(response, 'html.parser')
 
-        title_element = soup.select_one(".featured-heading strong")
-        title = title_element.text.strip() if title_element else None
-        if title:
-            title = title.split("Download", 1)[-1].split("Torrents", 1)[0].strip()
-        else:
+        def get_text(selector: str) -> Optional[str]:
+            el = soup.select_one(selector)
+            return el.text.strip() if el else None
+
+        title_raw = get_text(".featured-heading strong")
+        if not title_raw:
             raise ValueError("No title found for URL.")
+        title = title_raw.split("Download", 1)[-1].split("Torrents", 1)[0].strip()
 
         genres = tuple(Genre(g.text.strip()) for g in soup.select(".torrent-category span") if g.text.strip())
-        summary_element = soup.select_one(".torrent-detail-info p")
-        summary = summary_element.text.strip() if summary_element else "No summary available."
+        summary = get_text(".torrent-detail-info p") or "No summary available."
 
-        rating_element = soup.select_one(".rating .red")
-        rating = (
-            float(rating_element["style"].split(":")[1].strip("%;"))
-            if rating_element else 0.0
-        )
+        rating_style = soup.select_one(".rating .red")
+        rating = float(rating_style["style"].split(":")[1].strip("%;")) if rating_style else 0.0
 
-        image_element = soup.select_one(".torrent-image img")
-        image_url = f"https:{image_element['src']}" if image_element else None
+        image_el = soup.select_one(".torrent-image img")
+        image_url = f"https:{image_el['src']}" if image_el else None
 
-        torrents = []
+        torrent_rows = soup.select('tbody tr')
         torrent_data = []
-        for row in soup.select('tbody tr'):
+        for row in torrent_rows:
             link = row.select_one('td.coll-1 a[href^="/torrent/"]')
-            if not link:
-                continue
+            if link:
+                torrent_url = TORRENT_BASE_URL + link["href"]
+                seeds_text = row.select_one('td.coll-2.seeds')
+                seeds = int(seeds_text.text.strip()) if seeds_text else 0
+                torrent_data.append((torrent_url, seeds))
 
-            torrent_link = TORRENT_BASE_URL + link["href"]
-            seeder_count = row.select_one('td.coll-2.seeds')
-            seeders = int(seeder_count.text.strip()) if seeder_count else 0
-            torrent_data.append((torrent_link, seeders))
+        sorted_links = [url for url, _ in sorted(torrent_data, key=lambda x: x[1], reverse=True)]
+        torrents = [Torrent.from_url(link) for link in sorted_links[:TORRENT_SEARCH_DEPTH] if Torrent.from_url(link)]
 
-        sorted_torrents = sorted(torrent_data, key=lambda x: x[1], reverse=True)
-        sorted_torrent_links = [torrent[0] for torrent in sorted_torrents]
-
-        for link in sorted_torrent_links:
-            torrent = Torrent.from_url(link)
-            if torrent:
-                torrents.append(torrent)
-            if len(torrents) >= TORRENT_SEARCH_DEPTH:
-                break
-
-        movie = Movie(
+        return cls(
             id=Media.generate_id(title, url),
             media=MediaType.MOVIE,
             url=url,
-            metadata={'torrent_links': sorted_torrent_links},
+            metadata={'torrent_links': sorted_links},
             torrents=torrents,
-            torrents_count=len(sorted_torrent_links),
+            torrents_count=len(sorted_links),
             title=title,
             genres=genres,
             summary=summary,
             rating=rating,
-            poster=image_url,
+            poster=image_url
         )
 
-        return movie
-
     @classmethod
-    def print_header(cls, **kwargs):
-        settings = {**MOVIE_TABLE_FORMAT, **kwargs}
+    def print_details(cls, movies):
+        table = Table(
+            header_style=None,
+            box=DASH_HEAD,
+            expand=True,
+            width=console.width,
+            padding=(0, 2),
+            pad_edge=False,
+            show_edge=False,
+        )
 
-        def pad(text: str, width: int, extra_margin: int) -> str:
-            return text.ljust(width + extra_margin)
+        table.add_column("ID")
+        table.add_column("Title")
+        table.add_column("Rating", justify="right")
+        table.add_column("Languages")
+        table.add_column("Genres")
+        table.add_column("Torrents", justify="right")
 
-        headers = [
-            pad("ID", settings['id_width'], settings['margin']),
-            pad("Title", settings['title_width'], settings['margin']),
-            pad("Rating", settings['rating_width'], settings['margin']),
-            pad("Genres", settings['genres_width'], settings['margin']),
-            pad("Torrents", settings['torrents_width'], settings['margin']),
-        ]
+        for movie in movies:
+            table = movie.add_row(table)
 
-        print(''.join(headers))
-        print('-' * sum([
-            settings['id_width'] + settings['margin'],
-            settings['title_width'] + settings['margin'],
-            settings['rating_width'] + settings['margin'],
-            settings['genres_width'] + settings['margin'],
-            settings['torrents_width'] + settings['margin']
-        ]))
+        test = str(table)
+        console.print(table)
 
-    def print_row(self, **kwargs):
-        settings = {**MOVIE_TABLE_FORMAT, **kwargs}
+    def add_row(self, table: Table) -> Table:
+        languages_raw = list({torrent.language.capitalize() for torrent in self.torrents if torrent.language})
 
-        def truncate_and_lpad(text: str, width: int, extra_margin: int) -> str:
-            max_len = width - 3
-            if len(text) > width:
-                return text[:max_len] + "..." + " " * extra_margin
-            else:
-                return text.ljust(width + extra_margin)
+        id_content = Text(str(self.id).strip())
+        title_content = Text(self.title)
+        rating_content = Text(f"{self.rating:.1f}")
+        languages_content = Text(", ".join(languages_raw))
+        genre_content = Text(", ".join(g.capitalize() for g in self.genres))
+        torrents_content = Text(f"{len(self.torrents)}/{self.torrents_count}")
 
-        def truncate_and_rpad(text: str, width: int, extra_margin: int) -> str:
-            if len(text) > width:
-                return " " * (width - 3) + "..." + " " * extra_margin
-            else:
-                return text.rjust(width) + " " * extra_margin
+        table.add_row(id_content, title_content, rating_content, languages_content, genre_content, torrents_content)
 
-        def format_rating(movie_rating: float, width: int) -> str:
-            if movie_rating <= 1.0:
-                movie_rating = movie_rating * 100
-            return "-".rjust(width) if movie_rating == 0.0 else str(movie_rating).rjust(width)
+        return table
 
-        idx = truncate_and_lpad(str(self.id).strip(), settings['id_width'], settings['margin'])
-        title = truncate_and_lpad(self.title, settings['title_width'], settings['margin'])
-        rating = format_rating(self.rating, settings['rating_width']) + " " * settings['margin']
-        genres = truncate_and_lpad(', '.join(genre.capitalize() for genre in self.genres), settings['genres_width'], settings['margin'])
-        torrents = truncate_and_rpad(str(self.torrents_count).strip(), settings['torrents_width'], settings['margin'])
+    def print_summary(self):
+        summary_content = Text(self.summary, style="italic")
+        console.print(summary_content)
 
-        print(f"{idx}{title}{rating}{genres}{torrents}")
+    def print_torrents(self):
+        table = Table(
+            header_style=None,
+            box=DASH_HEAD,
+            expand=True,
+            width=console.width,
+            padding=(0, 2),
+            pad_edge=False,
+            show_edge=False,
+        )
+
+        table.add_column("Category")
+        table.add_column("Title")
+        table.add_column("Seeders", justify="right")
+        table.add_column("Size", justify="right")
+        table.add_column("Language")
+        table.add_column("Date")
+
+        for torrent in self.torrents:
+            table.add_row(
+                str(torrent.category),
+                str(torrent.title),
+                str(torrent.seeders),
+                str(torrent.size),
+                str(torrent.language),
+                str(torrent.date)
+            )
+
+        console.print(table)

@@ -41,6 +41,9 @@ class DateUnit(str, Enum):
         except ValueError:
             raise ValueError(f"Invalid date unit: '{unit}'")
 
+    def __str__(self):
+        return self.value.lower()
+
 
 class Date(BaseModel):
     value: int
@@ -66,6 +69,9 @@ class Date(BaseModel):
 
         return cls(value=value, unit=unit)
 
+    def __str__(self):
+        return f"{self.value} {str(self.unit)}{'' if self.value > 1 else 's'} ago"
+
 
 class SizeUnit(str, Enum):
     GB = "GB"
@@ -81,6 +87,9 @@ class SizeUnit(str, Enum):
             return cls(unit)
         except ValueError:
             raise ValueError(f"Invalid size unit: '{unit}'")
+
+    def __str__(self):
+        return self.value.upper()
 
 
 class Size(BaseModel):
@@ -98,6 +107,9 @@ class Size(BaseModel):
         unit = SizeUnit.from_string(match.group(2))
 
         return cls(value=value, unit=unit)
+
+    def __str__(self):
+        return f"{self.value:.2f} {str(self.unit)}"
 
 
 from bs4 import BeautifulSoup
@@ -135,8 +147,8 @@ from urllib.parse import urlparse
 from src.constants import TORRENT_SUPPORTED_LANGUAGES
 from src.utils.requests import requests
 
-
 class Torrent(Object):
+    title: str = Field(..., description="The title of the torrent.")
     category: str = Field(..., description="The category of the torrent.")
     language: str = Field(..., description="The language of the torrent content.")
     date: Date = Field(..., description="The date when the torrent was uploaded")
@@ -175,7 +187,9 @@ class Torrent(Object):
 
         soup = BeautifulSoup(response, 'html.parser')
 
-        # Extract language, category, subcategory, etc.
+        title_tag = soup.find('div', class_='box-info-heading').find('h1')
+        title = title_tag.get_text(strip=True) if title_tag else None
+
         language = get_li_span_text(soup, 'Language')
         if language not in TORRENT_SUPPORTED_LANGUAGES:
             logger.warning(f"Language '{language}' not supported.")
@@ -213,6 +227,7 @@ class Torrent(Object):
             raise ValueError("No magnet link or torrent file links found.")
 
         return Torrent(
+            title=title,
             url=url,
             metadata={'downloads': downloads, 'uploader': uploader, 'tags': tags, 'type': subcategory},
             category=category,

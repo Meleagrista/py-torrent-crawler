@@ -1,14 +1,14 @@
 import shlex
 
-from pygments import highlight
 from rich.console import Console
 from rich.prompt import Prompt
 from rich.text import Text
 
-console = Console(force_terminal=True)
+console = Console(force_terminal=True, width=140)
 
 class CustomPrompt(Prompt):
     prompt_suffix = ">>> "
+
 
 class CLI:
     def __init__(self):

@@ -17,6 +17,8 @@ libtorrent = {path = "dist/libtorrent-2.0.11-cp312-cp312-manylinux_2_17_x86_64.m
 torrentp = "^0.2.3"
 tqdm = "^4.67.1"
 rich = "^14.0.0"
+ascii-magic = "^2.3.0"
+pillow = "^11.2.1"
 
 [build-system]
 requires = ["poetry-core"]
