@@ -45,3 +45,5 @@ def setup_logging():
     logging.getLogger("driver_finder").setLevel(logging.CRITICAL)
     logging.getLogger("service").setLevel(logging.CRITICAL)
     logging.getLogger("remote_connection").setLevel(logging.CRITICAL)
+    logging.getLogger("selector_events").setLevel(logging.CRITICAL)
+    logging.getLogger("logger").setLevel(logging.CRITICAL)

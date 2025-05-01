@@ -1,14 +1,32 @@
+import hashlib
 import logging
 
 from typing import List, Dict, Any
 from pydantic import field_validator, Field, BaseModel, HttpUrl
+from rich.table import Table
+from rich.text import Text
 
+from src.core.cli import console
+from src.schemas.movie_schema import DASH_HEAD
 
 logger = logging.getLogger(__name__)
 
 class Object(BaseModel):
+    id: int = Field(..., description="The unique identifier of this instance.")
     url: HttpUrl = Field(..., description="Origin URL of this instance.")
     metadata: Dict[str, Any] = Field(default_factory=dict, description="Additional metadata of this instance.")
+
+    @staticmethod
+    def generate_id(title: str, url: str) -> int:
+        title = title.strip().lower()
+        url = url.strip().lower()
+
+        unique_str = f"{title}|{url}"
+        hash_digest = hashlib.sha256(unique_str.encode('utf-8')).hexdigest()
+
+        # Remove letters and get digits only
+        numeric_id = int(re.sub(r'\D', '', hash_digest)) % (10 ** 10)
+        return numeric_id
 
 def get_li_span_text(soup, label: str) -> str | None:
     try:
@@ -148,6 +166,7 @@ from src.constants import TORRENT_SUPPORTED_LANGUAGES
 from src.utils.requests import requests
 
 class Torrent(Object):
+    id: int = Field(..., description="The unique identifier for the torrent.")
     title: str = Field(..., description="The title of the torrent.")
     category: str = Field(..., description="The category of the torrent.")
     language: str = Field(..., description="The language of the torrent content.")
@@ -227,6 +246,7 @@ class Torrent(Object):
             raise ValueError("No magnet link or torrent file links found.")
 
         return Torrent(
+            id=Object.generate_id(title, url),
             title=title,
             url=url,
             metadata={'downloads': downloads, 'uploader': uploader, 'tags': tags, 'type': subcategory},
@@ -239,3 +259,39 @@ class Torrent(Object):
             magnet_link=magnet_link,
             torrent_links=torrent_links
         )
+
+    @classmethod
+    def print_details(cls, torrents):
+        table = Table(
+            header_style=None,
+            box=DASH_HEAD,
+            expand=True,
+            width=console.width,
+            padding=(0, 2),
+            pad_edge=False,
+            show_edge=False,
+        )
+
+        table.add_column("ID", min_width=8)
+        table.add_column("Title")
+        table.add_column("Seeders", justify="right")
+        table.add_column("Size", justify="right")
+        table.add_column("Language")
+        table.add_column("Date", justify="right")
+
+        for torrent in torrents:
+            table = torrent.add_row(table)
+
+        console.print(table)
+
+    def add_row(self, table: Table) -> Table:
+        id_content = Text(str(self.id).strip())
+        title_content = Text(self.title)
+        seeders_content = Text(str(self.seeders))
+        size_content = Text(str(self.size))
+        language_content = Text(self.language)
+        date_content = Text(str(self.date))
+
+        table.add_row(id_content, title_content, seeders_content, size_content, language_content, date_content)
+
+        return table

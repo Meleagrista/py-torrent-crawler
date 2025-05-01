@@ -18,10 +18,10 @@ class DownloaderWrapper(Downloader):
                 TextColumn("{task.fields[status]}"),
                 SpinnerColumn(),
                 BarColumn(complete_style="green"),
-                TextColumn("{task.completed}/{task.total}", style="progress.completed"),
-                TextColumn("{task.fields[download]} Kb/s", style="green"),
-                TextColumn("{task.fields[peers]} peers", style='dim', justify="right"),
+                TextColumn("{task.completed}%", style="progress.completed"),
                 TimeElapsedColumn(),
+                TextColumn("{task.fields[download]} Kb/s", style="dim"),
+                TextColumn("{task.fields[peers]} peers", style='dim'),
                 console=console,
                 transient=True,
         ) as progress:
@@ -37,13 +37,13 @@ class DownloaderWrapper(Downloader):
         if self._stop_after_download:
             self.stop()
         else:
-            with Live(console=console, transient=True) as live:
-                live.update(Text(f"Downloaded successfully.", style='green'))
+            with Live(console=console, transient=False) as live:
+                live.update(Text(f"Downloaded successfully!", style='green'))
                 await asyncio.sleep(2)
 
     def _get_status_progress(self, s):
         fields = {
-            'percentage': s.progress * 100,
+            'percentage': round(s.progress * 100),
             'status': str(s.state).capitalize() if s.num_peers > 0 else 'Seeding',
             'peers': s.num_peers,
             'download': round(s.download_rate / 1000, 2),

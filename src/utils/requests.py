@@ -4,7 +4,7 @@ import time
 import requests as py_requests
 import urllib3
 
-from src.constants import CHROME_BINARY
+from src.constants import CHROME_BINARY, SELENIUM_LOAD_STRATEGY
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -37,7 +37,7 @@ class RobustFetcher:
 
         options = Options()
         options.binary_location = chrome_binary
-        options.page_load_strategy = 'normal'
+        options.page_load_strategy = SELENIUM_LOAD_STRATEGY
         options.add_argument("--headless=new")
         options.add_argument("--disable-gpu")
         options.add_argument("--window-size=1920,1080")

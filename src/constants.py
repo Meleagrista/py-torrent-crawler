@@ -1,6 +1,8 @@
 import os
 from pathlib import Path
 
+from rich.box import Box
+
 # ─────────────────────────────────────────────
 # PATH CONFIGURATION
 # ─────────────────────────────────────────────
@@ -14,7 +16,7 @@ TORRENT_DOWNLOAD_PATH = Path.home() / 'downloads'
 CACHE_DIR = Path.home() / '.cache' / 'storage'
 
 # ─────────────────────────────────────────────
-# FILESYSTEM INITIALIZATION
+# FILE SYSTEM INITIALIZATION
 # ─────────────────────────────────────────────
 
 TORRENT_DOWNLOAD_PATH.mkdir(parents=True, exist_ok=True)
@@ -33,21 +35,42 @@ MOVIE_STORE_FILE = CACHE_DIR / 'movie_store.json'
 # ─────────────────────────────────────────────
 
 # Base URL for torrent scraping
-TORRENT_BASE_URL = os.environ.get('TORRENT_BASE_URL', 'https://1337x.to')
+TORRENT_BASE_URL = 'https://1337x.to'
 
 # Search depth (how many pages to crawl)
-TORRENT_SEARCH_DEPTH = int(os.environ.get('SEARCH_DEPTH', 2))
+default_search_depth = 2
+TORRENT_SEARCH_DEPTH = int(os.environ.get('TORRENT_FILES_PER_MOVIE', default_search_depth))
 
 # Supported languages
 default_languages = 'English, Spanish'
-TORRENT_SUPPORTED_LANGUAGES = os.environ.get('SUPPORTED_LANGUAGES', default_languages).replace(' ', '').split(',')
+TORRENT_SUPPORTED_LANGUAGES = os.environ.get('TORRENT_SUPPORTED_LANGUAGES', default_languages).replace(' ', '').split(',')
+TORRENT_SUPPORTED_LANGUAGES = [lang.capitalize() for lang in TORRENT_SUPPORTED_LANGUAGES]
 
-# Chrome binary path (for headless browsing if used)
-CHROME_BINARY = os.environ.get("CHROME_BINARY", '/usr/bin/chromium')
+# Chrome binary path
+CHROME_BINARY = '/usr/bin/chromium'
+
+# Selenium load strategy
+default_load_strategy = 'normal'
+SELENIUM_LOAD_STRATEGY = os.environ.get("SELENIUM_LOAD_STRATEGY", default_load_strategy)
 
 # Terminal display settings
-TERMINAL_WIDTH = int(os.environ.get("TERMINAL_WIDTH", 140))
+default_terminal_width = 150
+TERMINAL_WIDTH = int(os.environ.get("TERMINAL_WIDTH", default_terminal_width))
 
+# ─────────────────────────────────────────────
+# RICH TERMINAL SETTINGS
+# ─────────────────────────────────────────────
+
+DASH_HEAD: Box = Box(
+    "    \n"
+    "    \n"
+    "----\n"
+    "    \n"
+    "    \n"
+    "    \n"
+    "    \n"
+    "    \n"
+)
 
 
 

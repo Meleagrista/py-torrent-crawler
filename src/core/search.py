@@ -24,8 +24,11 @@ logger = logging.getLogger(__name__)
 class SearchEngine:
     def __init__(self):
         self._movie_search_url = TORRENT_BASE_URL + "/sort-category-search/{query}/Movies/seeders/desc/1/"
+
         self._movie_store = {}
         self._movie_id_store = {}
+
+        self._torrent_id_store = {}
 
         self._load_movies()
 
@@ -33,10 +36,14 @@ class SearchEngine:
     def movies(self) -> list[Movie]:
         return list(self._movie_store.values())
 
-    def get(self, idx: int) -> Optional[Movie]:
-        return self._retrieve_movie(movie_id=idx)
+    def get(self, idx: int, from_torrents: bool = False) -> Optional[Movie]:
+        if from_torrents:
+            return self._torrent_id_store.get(idx, None)
+        else:
+            return self._movie_id_store.get(idx, None)
 
-    def search(self, query: str) -> list['Movie']:
+    # noinspection PyUnresolvedReferences
+    def search(self, query: str, force: bool = False, language: str = None, torrents: int = None) -> list['Movie']:
         movies = set()
 
         with Live(console=console, transient=True) as live:
@@ -45,7 +52,7 @@ class SearchEngine:
             live.update(Text("Movie links fetched successfully!", style='green'))
             sleep(2)
 
-        with Progress(
+        with (Progress(
                 TextColumn("{task.description}"),
                 SpinnerColumn(),
                 BarColumn(complete_style="green"),
@@ -53,12 +60,22 @@ class SearchEngine:
                 TimeElapsedColumn(),
                 console=console,
                 transient=True
-        ) as progress:
-            task = progress.add_task("Processing movies", total=len(urls))
+        ) as progress):
+            task = progress.add_task("Processing", total=len(urls))
             for url in urls:
                 try:
-                    movie = self._retrieve_movie(url) or Movie.from_url(url)
-                    movies.add(movie)
+                    stored_movie: Movie = self._movie_store.get(url, None)
+
+                    if stored_movie and not force:
+                        movie = stored_movie
+                    else:
+                        movie = Movie.from_url(url, language=language, torrents=torrents)
+                        movie.id = stored_movie.id if stored_movie else movie.id
+
+                    if movie:
+                        movies.add(movie)
+                    else:
+                        logger.warning(f"Movie skipped for `{url}`")
                 except Exception as e:
                     logger.error(f"Error fetching movie from URL {url}: {e}")
                 progress.update(task, advance=1)
@@ -81,6 +98,13 @@ class SearchEngine:
             except (json.JSONDecodeError, ValidationError) as e:
                 logger.error(f"Failed to load movie store: {e}")
 
+        for movie in self._movie_store.values():
+            for torrent in movie.torrents:
+                if torrent.id in self._torrent_id_store:
+                    logger.warning(f"Duplicate torrent ID for movies {movie.title} and {self._torrent_id_store[torrent.id]}.")
+                else:
+                    self._torrent_id_store[torrent.id] = torrent
+
     def _save_movies(self):
         if not MOVIE_STORE_FILE.exists():
             logger.error(f"Movie store file {MOVIE_STORE_FILE} cannot be found.")
@@ -92,23 +116,11 @@ class SearchEngine:
 
     def _store_movies(self, movies: list[Movie], save: bool = True):
         for movie in movies:
-            self._store_movie(movie)
+            self._movie_store[str(movie.url)] = movie
+            self._movie_id_store[movie.id] = movie
 
         if save:
             self._save_movies()
-
-    def _store_movie(self, movie: Movie):
-        self._movie_store[movie.url] = movie
-        self._movie_id_store[movie.id] = movie
-
-    def _retrieve_movie(self, movie_url: str = None, movie_id: int = None) -> Optional[Movie]:
-        if movie_id and movie_url:
-            raise ValueError("Both movie_url and movie_id cannot be provided at the same time.")
-        if movie_url:
-            return self._movie_store.get(movie_url, None)
-        if movie_id:
-            return self._movie_id_store.get(movie_id, None)
-        raise ValueError("Either movie_url or movie_id must be provided.")
 
     def _get_movie_links(self, query: str) -> Set[str]:
         """

@@ -1,9 +1,13 @@
 import os
 import shlex
+from time import sleep
+
 import readline
 import atexit
 
 from rich.console import Console
+from rich.live import Live
+from rich.spinner import Spinner
 from rich.text import Text
 
 from src.constants import TERMINAL_WIDTH, HISTORY_FILE
@@ -34,7 +38,7 @@ class CLI:
         Register a command.
         :param name: command name
         :param arguments: List of tuples (arg_name, description)
-        :param keyword_args: Dict like {'-n': ('name', 'desc', 'type')} '--name': ('name', 'desc', 'type')}
+        :param keyword_args: Dict like {'-n': ('name', 'desc', 'type'), '--name': ('name', 'desc', 'type')}
         :param help_text: Description of the command
         """
         def decorator(func):
@@ -58,10 +62,12 @@ class CLI:
                     if readline.get_current_history_length() == 0 or readline.get_history_item(readline.get_current_history_length()) != raw_input:
                         readline.add_history(raw_input)
 
-                # TODO Add a spinner here.
                 if raw_input.lower() in ['exit', 'quit']:
-                    console.print("Exiting...")
-                    break
+                    with Live(console=console, transient=False) as live:
+                        live.update(Spinner(name='dots', text="Shutting down...", style='yellow'))
+                        sleep(2)
+                        live.update(Text(f"Shutdown successfully!", style='yellow'))
+                        break
 
                 if raw_input.lower() == 'help':
                     self.print_help()
@@ -86,23 +92,35 @@ class CLI:
                 positional = []
                 kwargs = {}
                 i = 0
+
                 while i < len(args_and_kwargs):
                     part = args_and_kwargs[i]
                     if part.startswith("-"):
-                        if i + 1 >= len(args_and_kwargs):
-                            console.print(f"[red]Missing value for keyword argument '{part}'[/red]")
-                            break
                         if part not in expected_kwargs:
                             console.print(f"[red]Unknown keyword argument '{part}'[/red]")
                             break
+
                         key = expected_kwargs[part][0]  # canonical name
-                        value = args_and_kwargs[i + 1]
-                        if not value.startswith("-"):
+                        is_expecting_arg = True
+
+                        for kwarg, cmd in expected_kwargs.items():
+                            if key == kwarg.replace("-", ""):
+                                is_expecting_arg = cmd[2] is not None
+
+                        if is_expecting_arg and i + 1 >= len(args_and_kwargs):
+                            console.print(f"[red]Missing value for keyword argument '{part}'[/red]")
+                            break
+
+                        value = args_and_kwargs[i + 1] if is_expecting_arg else None
+
+                        if not value:
+                            kwargs[key] = True
+                            i += 1
+                        elif not value.startswith("-"):
                             kwargs[key] = value
                             i += 2
                         else:
-                            kwargs[key] = True
-                            i += 1
+                            console.print(f"[red]Expected a value for '{part}' but got another flag.[/red]")
                     else:
                         positional.append(part)
                         i += 1
