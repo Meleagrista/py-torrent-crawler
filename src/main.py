@@ -3,7 +3,7 @@ setup_logging()
 
 import asyncio
 
-from typing import Optional
+from typing import Optional, Literal
 
 from src.constants import TORRENT_DOWNLOAD_PATH, TORRENT_SUPPORTED_LANGUAGES
 from src.core.cli import CLI, console
@@ -45,7 +45,7 @@ def search(movie_title: str, refresh: bool = False, language: str = None, files:
     if files and not isinstance(files, int):
         files = int(files)
         if files < 0:
-            console.print("[red]Invalid number of files.[/red]")
+            console.print("[red]Invalid number of files.[/red] Must be a positive number.")
             return
 
     movies = search_engine.search(movie_title, force=refresh, language=language, torrents=files)
@@ -104,20 +104,48 @@ def torrents(movie_id):
 @cli.command(
     "history",
     keyword_args={
-        '-n':       ('number',  'Number of movies to display',  'number'    ),
-        '-s':       ('sort',    'Sort movies by title',         None        ),
-        '--sort':   ('sort',    'Sort movies by title',         None        ),
+        '-n':       ('number',  'Number of movies to display',                          'number'    ),
+        '-s':       ('sort',    'Sort movies by attribute (title, year or rating).',    'option'    ),
+        '--sort':   ('sort',    'Sort movies by attribute (title, year or rating).',    'option'    ),
+        '-t':       ('title',   'Filter movies by title',                               'text'      ),
+        '--title':  ('title',   'Filter movies by title',                               'text'      ),
     },
     help_text="Displays the movie search history."
 )
-def history(number: Optional[int] = None, sort: bool = False):
-    if not isinstance(sort, bool):
-        console.print("[red]Invalid option.[/red]")
+def history(
+    number: int = 10,
+    sort: Literal['title', 'year', 'rating'] = None,
+    title: Optional[str] = None
+):
+    if sort and sort not in ['title', 'year', 'rating']:
+        console.print("[red]Invalid sort option.[/red] The supported options are: [green]title[/green], [green]year[/green], [green]rating[/green].")
+        return
+
+    if isinstance(number, int):
+        number = int(number)
+
+    if number < 0:
+        console.print("[red]Invalid number of movies.[/red] Must be a positive number.")
         return
 
     movies = search_engine.movies
-    movies.sort(key=lambda x: x.title) if sort else movies
-    number = int(number) if number is not None else len(movies)
+
+    # Filter by search text
+    if title:
+        title_lower = title.lower()
+        movies = [movie for movie in movies if title_lower in movie.title.lower()]
+
+    # Apply sorting
+    if sort == 'year':
+        movies.sort(key=lambda x: x.year, reverse=True)
+    elif sort == 'rating':
+        movies.sort(key=lambda x: x.rating, reverse=True)
+    elif sort == 'title':
+        movies.sort(key=lambda x: x.title)
+
+    # Adjust number
+    if number > len(movies):
+        number = len(movies)
 
     if not movies:
         console.print("[red]No results found.[/red]")

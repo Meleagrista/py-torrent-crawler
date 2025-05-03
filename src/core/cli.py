@@ -8,6 +8,7 @@ import atexit
 from rich.console import Console
 from rich.live import Live
 from rich.spinner import Spinner
+from rich.table import Table
 from rich.text import Text
 
 from src.constants import TERMINAL_WIDTH, HISTORY_FILE
@@ -23,6 +24,10 @@ else:
 
 # Save history on exit
 atexit.register(readline.write_history_file, HISTORY_FILE)
+
+# Set the spacing for the help text.
+FIRST_COLUMN_WIDTH = 16
+SECOND_COLUMN_WIDTH = 12
 
 
 class CLI:
@@ -134,19 +139,31 @@ class CLI:
             except Exception as e:
                 console.print(f"[red]An error occurred:[/red] {e}")
 
-    # TODO Use Tables for the formatting.
     def print_help(self):
-        console.print(f"[bold]Usage:[/bold]")
-        console.print(f"{' '*4}command [options] [arguments]\n", markup=False)
+        console.print("[bold]Usage:[/bold]")
+        console.print("    command [dim]<argument> <options>[/dim]", highlight=False, end="\n\n")
 
-        console.print("[bold]Options:[/bold]")
-        for flag, desc in self.global_options:
-            console.print(f"{' '*4}[blue]{flag:<20}[/blue] {desc}")
-        console.print()
+        if self.global_options:
+            console.print("[bold]Options:[/bold]")
+            options_table = Table(show_header=False, box=None, padding=(0, 1))
+            options_table.add_column("Flag", style="blue", no_wrap=True, width=FIRST_COLUMN_WIDTH)
+            options_table.add_column("Description")
+
+            for flag, desc in self.global_options:
+                options_table.add_row(flag, desc)
+
+            console.print(options_table)
+            console.print()
 
         console.print("[bold]Available commands:[/bold]")
+        command_table = Table(show_header=False, box=None, padding=(0, 1))
+        command_table.add_column("Command", style="blue", no_wrap=True, width=FIRST_COLUMN_WIDTH)
+        command_table.add_column("Description")
+
         for name, cmd in self.commands.items():
-            console.print(f"{' '*4}[blue]{name:<20}[/blue] {cmd['help']}")
+            command_table.add_row(name, cmd["help"])
+
+        console.print(command_table)
 
     def print_command_help(self, name):
         if name not in self.commands:
@@ -155,35 +172,40 @@ class CLI:
 
         cmd = self.commands[name]
 
-        console.print(f"[bold]Description:[/bold]\n  {cmd['help']}\n")
+        console.print(f"[bold]Description:[/bold]\n  {cmd['help']}", end="\n\n")
 
         args_part = " ".join(f"<{arg}>" for arg, _ in cmd["args"])
         console.print(f"[bold]Usage:[/bold]")
-        console.print(f"{' '*4}{name} {args_part}\n", highlight=False)
+        console.print(f"    {name} {args_part}\n", highlight=False)
 
         if cmd["args"]:
             console.print("[bold]Arguments:[/bold]")
+            arg_table = Table(show_header=False, box=None, padding=(0, 1))
+            arg_table.add_column("Argument", style="blue", no_wrap=True, width=FIRST_COLUMN_WIDTH)
+            arg_table.add_column("Description")
+
             for arg, desc in cmd["args"]:
-                console.print(f"{' '*4}[blue]{arg:<20}[/blue] {desc}")
+                arg_table.add_row(arg, desc)
+
+            console.print(arg_table)
             console.print()
 
         if cmd["kwargs"]:
             console.print("[bold]Options:[/bold]")
 
-            # Group keyword args by canonical name
+            # Group by canonical name
             kw_by_name = {}
             for k, (canonical, desc, value) in cmd["kwargs"].items():
                 kw_by_name.setdefault(canonical, {"flags": [], "desc": desc, "type": value})["flags"].append(k)
 
+            kw_table = Table(show_header=False, box=None, padding=(0, 1))
+            kw_table.add_column("Flags", style="blue", no_wrap=True, width=FIRST_COLUMN_WIDTH)
+            kw_table.add_column("Values", style="dim", no_wrap=True, width=SECOND_COLUMN_WIDTH, highlight=False)
+            kw_table.add_column("Description")
+
             for kw_name, info in kw_by_name.items():
                 flags = ", ".join(info["flags"])
-                type_hint = f"{info['type']}" if info.get('type') else ""
+                type_hint = f" <{info['type']}>" if info.get("type") else ""
+                kw_table.add_row(flags, type_hint, info["desc"])
 
-                text = Text(" " * 4)
-                text.append(flags, style="blue")
-                if type_hint:
-                    text.append(f" <{type_hint}>", style="dim")
-                text.pad_right(24 - len(text.plain))
-                text.append(info['desc'])
-
-                console.print(text, highlight=False)
+            console.print(kw_table)
