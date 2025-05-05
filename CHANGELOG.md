@@ -1,6 +1,13 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [unreleased] - 2025-05-05
+
+### Updated
+- **2025-05-05**:
+  - Update `README.md` with new repository name.
+  - Update movie schema output for edge case.
+
 ## [v1.0.0] – 2025-05-05
 
 ### Added
@@ -34,7 +41,7 @@ All notable changes to this project will be documented in this file.
   - Add `README.md` documentation.
   - Add `LICENSE.txt`.
 
-### Changed
+### Updated
 - **2025-04-21**:
   - Update terminal output formatting through `rich` library.
 
