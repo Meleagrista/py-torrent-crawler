@@ -25,25 +25,14 @@
       <img src="https://img.shields.io/github/license/Meleagrista/py-ev01-api" alt="license" />
     </a>
   </p>
+
+  <h4>
+    <a href="https://github.com/Meleagrista/py-ev01-api/CHANGELOG.md">View changes</a>
+    <span> · </span>
+    <a href="https://github.com/Meleagrista/py-ev01-api/issues/">Request feature</a>
+  </h4>
 </div>
 
-<!-- 
-  <h4>
-      <a href="https://github.com/Meleagrista/py-ev01-api/">View Demo</a>
-    <span> · </span>
-      <a href="https://github.com/Meleagrista/py-ev01-api">Documentation</a>
-    <span> · </span>
-      <a href="https://github.com/Meleagrista/py-ev01-api/issues/">Report Bug</a>
-    <span> · </span>
-      <a href="https://github.com/Meleagrista/py-ev01-api/issues/">Request Feature</a>
-  </h4>
--->
-
-<!--    
-<a href="https://github.com/Meleagrista/py-ev01-api/blob/master/LICENSE">
-    <img src="https://img.shields.io/github/license/Meleagrista/py-ev01-api.svg" alt="license" />
-</a> 
--->
 
 # Table of Contents
 - [About the Project](#about-the-project)
@@ -201,35 +190,6 @@ Special thanks to the following projects and resources that inspired or supporte
 - [Best-README-Template](https://github.com/othneildrew/Best-README-Template) – Another excellent template resource for project documentation.
 - [Shields.io](https://shields.io/) – For providing useful badges to enhance the README.
 - [Choose an Open Source License](https://choosealicense.com/) - For helping to select the right license for this project.
-
-<!--
-- [X] Add Docker image for Windows usage.
-- [X] Add mechanism to download movie outside image.
-- [X] Update search function to be more user-friendly (add a loading bar).
-- [X] Update console output appearance.
-- [X] Update download bar.
-- [X] Update GUI controls to a command line interface.
-- [X] Add new GUI commands.
-
-### 2025-04-20
-- [X] Add a retry mechanism for failed requests.
-- [X] Update HTML parser to extract title from different container.
-- [X] Update Genre enum for better readability.
-
-### 2025-04-21
-- [X] Update `help` command to show more information.
-- [X] Add a command history feature.
-- [X] Update CLI to use `rich` library.
-
-### 2025-04-27
-- [X] Update movie data, parse year from name.
-- [X] Make a simple persistence system for the searched movies.
-
-### 2025-04-31
-- [X] Add a command to load more torrent files (choose number or language).
-- [X] Add a keyword to load torrent files from a specific language with `/search`.
-- [X] Add a keyword to use history with queries or years.
--->
 
 [Python-badge]: https://img.shields.io/badge/python-%233776AB?style=for-the-badge&logo=python&logoColor=white
 [Python-url]: https://www.python.org
