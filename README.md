@@ -27,7 +27,7 @@
   </p>
 
   <h4>
-    <a href="https://github.com/Meleagrista/py-ev01-api/CHANGELOG.md">View changes</a>
+    <a href="https://github.com/Meleagrista/py-ev01-api/blob/master/CHANGELOG.md">View changes</a>
     <span> · </span>
     <a href="https://github.com/Meleagrista/py-ev01-api/issues/">Request feature</a>
   </h4>
