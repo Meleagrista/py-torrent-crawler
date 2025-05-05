@@ -1,8 +1,8 @@
 [tool.poetry]
-name = "py-ev01-api"
+name = "py-torrent-crawler"
 version = "0.1.0"
-description = ""
-authors = ["Your Name <you@example.com>"]
+description = "Streamlined torrent search and download for movies."
+authors = ["Martín do Río Rico <mdoriorico@gamil.com>"]
 readme = "README.md"
 package-mode = false
 

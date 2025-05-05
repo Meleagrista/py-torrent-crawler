@@ -6,30 +6,30 @@
     Streamlined torrent search and download for movies.
   </p>
   <p>
-    <a href="https://github.com/Meleagrista/py-ev01-api/graphs/contributors">
-      <img src="https://img.shields.io/github/contributors/Meleagrista/py-ev01-api" alt="contributors" />
+    <a href="https://github.com/Meleagrista/py-torrent-crawler/graphs/contributors">
+      <img src="https://img.shields.io/github/contributors/Meleagrista/py-torrent-crawler" alt="contributors" />
     </a>
     <a href="">
-      <img src="https://img.shields.io/github/last-commit/Meleagrista/py-ev01-api" alt="last update" />
+      <img src="https://img.shields.io/github/last-commit/Meleagrista/py-torrent-crawler" alt="last update" />
     </a>
-    <a href="https://github.com/Meleagrista/py-ev01-api/stargazers">
-      <img src="https://img.shields.io/github/stars/Meleagrista/py-ev01-api" alt="stars" />
+    <a href="https://github.com/Meleagrista/py-torrent-crawler/stargazers">
+      <img src="https://img.shields.io/github/stars/Meleagrista/py-torrent-crawler" alt="stars" />
     </a>
-    <a href="https://github.com/Meleagrista/py-ev01-api/network/members">
-      <img src="https://img.shields.io/github/forks/Meleagrista/py-ev01-api" alt="forks" />
+    <a href="https://github.com/Meleagrista/py-torrent-crawler/network/members">
+      <img src="https://img.shields.io/github/forks/Meleagrista/py-torrent-crawler" alt="forks" />
     </a>
-    <a href="https://github.com/Meleagrista/py-ev01-api/issues/">
-      <img src="https://img.shields.io/github/issues/Meleagrista/py-ev01-api" alt="open issues" />
+    <a href="https://github.com/Meleagrista/py-torrent-crawler/issues/">
+      <img src="https://img.shields.io/github/issues/Meleagrista/py-torrent-crawler" alt="open issues" />
     </a>
-    <a href="https://github.com/Meleagrista/py-ev01-api/blob/master/LICENSE.txt">
-      <img src="https://img.shields.io/github/license/Meleagrista/py-ev01-api" alt="license" />
+    <a href="https://github.com/Meleagrista/py-torrent-crawler/blob/master/LICENSE.txt">
+      <img src="https://img.shields.io/github/license/Meleagrista/py-torrent-crawler" alt="license" />
     </a>
   </p>
 
   <h4>
-    <a href="https://github.com/Meleagrista/py-ev01-api/blob/master/CHANGELOG.md">View changes</a>
+    <a href="https://github.com/Meleagrista/py-torrent-crawler/blob/master/CHANGELOG.md">View changes</a>
     <span> · </span>
-    <a href="https://github.com/Meleagrista/py-ev01-api/issues/">Request feature</a>
+    <a href="https://github.com/Meleagrista/py-torrent-crawler/issues/">Request feature</a>
   </h4>
 </div>
 
@@ -111,11 +111,11 @@ Follow these steps to set up the project on your local machine.
 
 1. Clone the project.
   ```bash
-  git clone https://github.com/Meleagrista/py-ev01-api.git
+  git clone https://github.com/Meleagrista/py-torrent-crawler.git
   ```
 2. Go to the project directory.
   ```bash
-  cd py-ev01-api
+  cd py-torrent-crawler
   ```
 3. Make sure **Docker** is installed and the daemon is active.
 4. Build the project using **Make**.
@@ -144,8 +144,9 @@ You can customize the behavior of the program by setting the following environme
 - **`TERMINAL_WIDTH`**  Sets the width of the terminal output. Adjust this value to match your terminal size for optimal display.
 
 # Roadmap
+- [ ] Add screenshots and a demo to documentation.
 - [ ] Add subtitle search by extracting metadata from torrent files.
-- [ ] Implement scraping capabilities for additional torrent sites.
+- [ ] Add alternative torrent sites for scrapping.
 - [ ] Improve search functionality to support other media types.
   - [ ] Add support for TV shows and series.
 
@@ -169,8 +170,8 @@ Any contributions you make are **greatly appreciated**.
 5. Open a pull request
 
 ## Contributors
-<a href="https://github.com/Meleagrista/py-ev01-api/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=Meleagrista/py-ev01-api" alt="contrib.rocks image" />
+<a href="https://github.com/Meleagrista/py-torrent-crawler/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=Meleagrista/py-torrent-crawler" alt="contrib.rocks image" />
 </a>
 
 # License

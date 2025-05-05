@@ -126,6 +126,7 @@ class CLI:
                             i += 2
                         else:
                             console.print(f"[red]Expected a value for '{part}' but got another flag.[/red]")
+                            break
                     else:
                         positional.append(part)
                         i += 1

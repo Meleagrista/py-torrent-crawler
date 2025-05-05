@@ -1,5 +1,5 @@
-IMAGE_NAME=py-torrent-downloader
-IMAGE_TAG=dev
+IMAGE_NAME=py-torrent-crawler
+IMAGE_TAG=1.0.0
 CONTAINER_NAME=py-torrent-downloader-container
 BIND_PATH ?= $(shell pwd)
 DOWNLOAD_DIR ?= $(shell pwd)/devops/volumes/download

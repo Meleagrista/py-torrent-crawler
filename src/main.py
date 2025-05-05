@@ -23,7 +23,7 @@ def get_movie_or_warn(movie_id: int):
 
 @cli.command(
     "search",
-    arguments=[("title", "Title of the movie to search for")],
+    arguments=[("title", "Title of the movie to search for, use quotes if the title contains spaces")],
     keyword_args={
         '--refresh':  ('refresh',  'Overwrite stored movies if possible',            None     ),
         '-l':         ('language', 'Language to search in the torrent files',       'text'    ),

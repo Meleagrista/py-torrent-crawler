@@ -184,17 +184,15 @@ class Movie(Media):
         console.print(table)
 
     @property
-    def languages(self) -> str:
+    def languages(self) -> list[str]:
         return list({torrent.language.capitalize() for torrent in self.torrents if torrent.language})
 
     def add_row(self, table: Table) -> Table:
-        languages_raw = list({torrent.language.capitalize() for torrent in self.torrents if torrent.language})
-
         id_content = Text(str(self.id).strip())
         title_content = Text(self.title)
         year_content = Text(f"{self.year}") if self.year else Text("-")
         rating_content = Text(f"{self.rating:.1f}") if self.rating else Text("-")
-        languages_content = Text(", ".join(languages_raw))
+        languages_content = Text(", ".join(self.languages) if self.languages else "-")
         genre_content = Text(", ".join(g.capitalize() for g in self.genres))
         torrents_content = Text(f"{len(self.torrents)}/{self.torrents_count}")
 
