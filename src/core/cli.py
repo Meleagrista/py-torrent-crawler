@@ -57,7 +57,7 @@ class CLI:
         return decorator
 
     def start(self):
-        console.print("[dim]Custom CLI[/dim]. Type 'help' to see available commands. Type 'exit' to quit.")
+        console.print("[dim]Welcome to the search automation and content download CLI[/dim]. Type 'help' to see available commands. Type 'exit' to quit.")
         while True:
             try:
                 raw_input = input(">>> ").strip()
