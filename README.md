@@ -1,13 +1,13 @@
 <div align="center">
   <!--suppress CheckImageSize -->
-  <img src=".assets/logo-02.png" alt="logo" width="200" height="auto" />
+  <img src="docs/assets/logo-02.png" alt="logo" width="200" height="auto" />
   <h1>Torrent Crawler</h1>
   <p>
     Streamlined torrent search and download for movies.
   </p>
   <p>
-    <a href="https://github.com/Meleagrista/py-torrent-crawler/graphs/contributors">
-      <img src="https://img.shields.io/github/contributors/Meleagrista/py-torrent-crawler" alt="contributors" />
+    <a href="">
+    <img src="https://img.shields.io/badge/stable-%237ED957?label=status" alt="state" />
     </a>
     <a href="">
       <img src="https://img.shields.io/github/last-commit/Meleagrista/py-torrent-crawler" alt="last update" />
@@ -18,16 +18,13 @@
     <a href="https://github.com/Meleagrista/py-torrent-crawler/network/members">
       <img src="https://img.shields.io/github/forks/Meleagrista/py-torrent-crawler" alt="forks" />
     </a>
-    <a href="https://github.com/Meleagrista/py-torrent-crawler/issues/">
-      <img src="https://img.shields.io/github/issues/Meleagrista/py-torrent-crawler" alt="open issues" />
-    </a>
     <a href="https://github.com/Meleagrista/py-torrent-crawler/blob/master/LICENSE.txt">
       <img src="https://img.shields.io/github/license/Meleagrista/py-torrent-crawler" alt="license" />
     </a>
   </p>
 
   <h4>
-    <a href="https://github.com/Meleagrista/py-torrent-crawler/blob/master/CHANGELOG.md">View changes</a>
+    <a href="https://github.com/Meleagrista/py-torrent-crawler/blob/master/docs/CHANGELOG.md">View changes</a>
     <span> · </span>
     <a href="https://github.com/Meleagrista/py-torrent-crawler/issues/">Request feature</a>
   </h4>
@@ -64,7 +61,7 @@ This project is a command-line search engine and crawler designed to automate se
 Follow these steps to set up and run the project locally.
 
 ## Prerequisites
-Before running this project, ensure you have the following tools installed:
+Before running this project, ensure you have the following tools installed.
 
 ### Docker
 Docker is required to run the project in a containerized environment. It enables compatibility across platforms, including Windows.
@@ -124,7 +121,7 @@ Follow these steps to set up the project on your local machine.
   ```
 
 # Usage
-To run the project using the **Docker** image, use the following command:
+Follow the steps below to get started and use the project effectively.
   ```bash
   make run
   ```
@@ -144,6 +141,7 @@ You can customize the behavior of the program by setting the following environme
 - **`TERMINAL_WIDTH`**  Sets the width of the terminal output. Adjust this value to match your terminal size for optimal display.
 
 # Roadmap
+The following features and enhancements are planned for development.
 - [ ] Add screenshots and a demo to documentation.
 - [ ] Add subtitle search by extracting metadata from torrent files.
 - [ ] Add alternative torrent sites for scrapping.
@@ -187,16 +185,18 @@ Special thanks to the following projects and resources that inspired or supporte
 
 - [TorrentP](https://github.com/iw4p/torrentp) – A lightweight torrent download tool that served as inspiration.
 - [libtorrent](https://www.libtorrent.org) – The powerful BitTorrent library.
-- [Awesome Readme Template](https://github.com/Louis3797/awesome-readme-template) – A great starting point for crafting high-quality README files.
-- [Best-README-Template](https://github.com/othneildrew/Best-README-Template) – Another excellent template resource for project documentation.
-- [Shields.io](https://shields.io/) – For providing useful badges to enhance the README.
 - [Choose an Open Source License](https://choosealicense.com/) - For helping to select the right license for this project.
 
+<!-- Status -->
+[experimental]: https://img.shields.io/badge/experimental-%23FFA500?label=status
+[stable]: https://img.shields.io/badge/stable-%237ED957?label=status
+[unstable]: https://img.shields.io/badge/unstable-%23FF4C4C?label=status
+[archived]: https://img.shields.io/badge/archived-%23A0A0A0?label=status
+
+<!-- Badges -->
 [Python-badge]: https://img.shields.io/badge/python-%233776AB?style=for-the-badge&logo=python&logoColor=white
 [Python-url]: https://www.python.org
-
 [Docker-badge]: https://img.shields.io/badge/docker-%232496ED?style=for-the-badge&logo=docker&logoColor=white
 [Docker-url]: https://www.docker.com
-
 [Poetry-badge]: https://img.shields.io/badge/poetry-%2360A5FA?style=for-the-badge&logo=poetry&logoColor=white
 [Poetry-url]: https://python-poetry.org
